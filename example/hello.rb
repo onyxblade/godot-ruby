@@ -1,11 +1,8 @@
-Class.new Godot::Object do
+Class.new do
+  include Godot::Object
   extends :Object
 
-  #def _ready
-  #  puts "hi!"
-  #end
-
-  def test_a
-    123
+  def _ready
+    super
   end
 end

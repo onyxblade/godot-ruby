@@ -89,6 +89,25 @@ godot_string gdrb_get_template_source_code(godot_pluginscript_language_data *p_d
 void gdrb_add_global_constant(godot_pluginscript_language_data *p_data, const godot_string *p_variable, const godot_variant *p_value) {
 	printf("add_global_constant\n");
 }
+
+VALUE gdrb_object_call(VALUE self, VALUE method_name, VALUE method_args) {
+	VALUE rpointer = rb_funcall(self, rb_intern("godot_pointer"), 0);
+	godot_object *pointer = (godot_object *)NUM2LONG(rpointer);
+	godot_variant gv_args = gdrb_ruby_builtin_to_godot_variant(method_args);
+	godot_variant gv_name = gdrb_ruby_builtin_to_godot_variant(method_name);
+
+	godot_variant_call_error p_error;
+	godot_method_bind *method_bind = api->godot_method_bind_get_method("Object", "callv");
+
+	const godot_variant *c_args[] = {
+		&gv_name,
+		&gv_args
+	};
+	api->godot_method_bind_call(method_bind, pointer, c_args, 2, &p_error);
+	printf("call error %d", p_error.error);
+	return Qnil;
+}
+
 godot_pluginscript_language_data *gdrb_ruby_init() {
 	printf("gdrb_ruby_init\n");
 	ruby_init();
@@ -100,6 +119,8 @@ godot_pluginscript_language_data *gdrb_ruby_init() {
 	VALUE godot_module = rb_const_get(rb_cModule, rb_intern("Godot"));
 	rb_define_const(godot_module, "ROOT", rb_str_new_cstr("/home/cichol/godot-ruby/example"));
 
+	VALUE object_module = rb_const_get(godot_module, rb_intern("Object"));
+	rb_define_method(object_module, "call_native", &gdrb_object_call, 2);
 	return NULL;
 }
 void gdrb_ruby_finish(godot_pluginscript_language_data *p_data) {
@@ -159,7 +180,8 @@ godot_pluginscript_script_manifest gdrb_ruby_script_init(godot_pluginscript_lang
 	return manifest;
 }
 void gdrb_ruby_script_finish(godot_pluginscript_script_data *p_data) {
-	free((gdrb_pluginscript_script_data*) p_data);
+	gdrb_pluginscript_script_data *data = (gdrb_pluginscript_script_data*) p_data;
+	free(p_data);
 	printf("script_finish\n");
 }
 
@@ -173,6 +195,7 @@ godot_pluginscript_instance_data *gdrb_ruby_instance_init(godot_pluginscript_scr
 	rb_funcall(script_data->links, rb_intern("[]="), 2, object_id, instance);
 	data->object = instance;
 	data->owner = p_owner;
+	rb_funcall(instance, rb_intern("godot_pointer="), 1, LONG2NUM((long)p_owner));
 
 	printf("ruby_instance_init\n");
 	return (godot_pluginscript_instance_data*)data;
@@ -207,25 +230,21 @@ godot_variant gdrb_ruby_instance_call_method(godot_pluginscript_instance_data *p
 		VALUE ret = rb_funcall(data->object, rb_intern_str(method_name_str), 0);
 		var = gdrb_ruby_builtin_to_godot_variant(ret);
 	} else {
-		godot_variant_call_error p_error;
-		godot_variant callv;
-		godot_string name;
-		api->godot_string_new(&name);
-		api->godot_string_parse_utf8(&name, "test_a");
-		api->godot_variant_new_string(&callv, &name);
+		VALUE klass = rb_funcall(data->object, rb_intern("class"), 0);
+		VALUE base_name_symbol = rb_funcall(klass, rb_intern("base_name"), 0);
+		VALUE base_name = rb_funcall(base_name_symbol, rb_intern("to_s"), 0);
 
-		const godot_variant *c_args[] = {
-			&callv
-		};
-		godot_method_bind *method_bind = api->godot_method_bind_get_method("Object", "call");
-		var = api->godot_method_bind_call(method_bind, data->owner, c_args, 1, &p_error);
-		// godot_method_bind *method_bind = api->godot_method_bind_get_method("Node", "test_a");
-		// var = api->godot_method_bind_call(method_bind, data->owner, NULL, 0, &p_error);
-		// api->godot_method_bind_ptrcall(method_bind, data->owner, c_args, &var)
-		printf("testing\n");
-		printf("call error %d", p_error.error);
+		godot_method_bind *method = api->godot_method_bind_get_method(StringValueCStr(base_name), StringValueCStr(method_name_str));
 
+		if (method) {
+			var = api->godot_method_bind_call(method, data->owner, p_args, p_argcount, r_error);
+		} else {
+			api->godot_variant_new_nil(&var);
+			printf("called undefined method %s\n", StringValueCStr(method_name_str));
+		}
+		printf("call error %d\n", r_error->error);
 	}
+
 	api->godot_string_destroy(&method_name);
 	return var;
 }
