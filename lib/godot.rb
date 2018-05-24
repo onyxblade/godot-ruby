@@ -12,6 +12,7 @@ module Godot
 end
 
 require_relative "godot/object.rb"
-Dir.glob("#{__dir__}/godot/*.rb").each do |file|
+require_relative "godot/built_in_type.rb"
+Dir.glob("#{__dir__}/godot/**/*.rb").each do |file|
   require file
 end
