@@ -23,6 +23,8 @@ static const char *GDRB_RUBY_COMMENT_DELIMITERS[] = { "#", 0 };
 static const char *GDRB_RUBY_STRING_DELIMITERS[] = { "\" \"", "' '", 0 };
 static godot_pluginscript_language_desc desc;
 
+godot_variant gdrb_ruby_builtin_to_godot_variant(VALUE robject);
+
 typedef struct {
 	VALUE klass;
 	VALUE links;
@@ -30,6 +32,7 @@ typedef struct {
 
 typedef struct {
 	VALUE object;
+	godot_object *owner;
 } gdrb_pluginscript_instance_data;
 
 void print_godot_string(const godot_string *str) {
@@ -49,7 +52,7 @@ void ruby_p(const VALUE value) {
 VALUE gdrb_godot_string_to_ruby_string(const godot_string *str) {
 	VALUE ruby_str;
 	godot_char_string char_string = api->godot_string_utf8(str);
-	char* chars = api->godot_char_string_get_data(&char_string);
+	const char *chars = api->godot_char_string_get_data(&char_string);
 	ruby_str = rb_str_new_cstr(chars);
 	api->godot_char_string_destroy(&char_string);
 	return ruby_str;
@@ -122,13 +125,20 @@ godot_pluginscript_script_manifest gdrb_ruby_script_init(godot_pluginscript_lang
 	api->godot_string_name_new_data(&name, StringValueCStr(klass_name));
 
 	godot_string_name base;
-	api->godot_string_name_new_data(&base, "Object");
+	VALUE base_name_symbol = rb_funcall(klass, rb_intern("base_name"), 0);
+	VALUE base_name = rb_funcall(base_name_symbol, rb_intern("to_s"), 0);
+	api->godot_string_name_new_data(&base, StringValueCStr(base_name));
 
 	godot_dictionary member_lines;
 	api->godot_dictionary_new(&member_lines);
 
 	godot_array methods;
 	api->godot_array_new(&methods);
+
+	VALUE method_hash = rb_eval_string("{name: 'test_a', args: [], default_args: [], return: {}, flags: 0, rpc_mode: 0}");
+	godot_variant method_dict = gdrb_ruby_builtin_to_godot_variant(method_hash);
+	api->godot_array_append(&methods, &method_dict);
+	api->godot_variant_destroy(&method_dict);
 
 	godot_array signals;
 	api->godot_array_new(&signals);
@@ -162,6 +172,7 @@ godot_pluginscript_instance_data *gdrb_ruby_instance_init(godot_pluginscript_scr
 	VALUE object_id = rb_funcall(instance, rb_intern("object_id"), 0);
 	rb_funcall(script_data->links, rb_intern("[]="), 2, object_id, instance);
 	data->object = instance;
+	data->owner = p_owner;
 
 	printf("ruby_instance_init\n");
 	return (godot_pluginscript_instance_data*)data;
@@ -183,12 +194,40 @@ godot_bool gdrb_ruby_instance_get_prop(godot_pluginscript_instance_data *p_data,
 
 godot_variant gdrb_ruby_instance_call_method(godot_pluginscript_instance_data *p_data, const godot_string_name *p_method, const godot_variant **p_args, int p_argcount, godot_variant_call_error *r_error) {
 	printf("instance_call_method\n");
+	print_godot_string_name(p_method);
 	gdrb_pluginscript_instance_data *data = (gdrb_pluginscript_instance_data*) p_data;
 
 	godot_string method_name = api->godot_string_name_get_name(p_method);
 	VALUE method_name_str = gdrb_godot_string_to_ruby_string(&method_name);
-	rb_funcall(data->object, rb_intern_str(method_name_str), 0);
+	VALUE respond_to = rb_funcall(data->object, rb_intern("respond_to?"), 1, method_name_str);
+
+	godot_variant var;
+
+	if (RTEST(respond_to)) {
+		VALUE ret = rb_funcall(data->object, rb_intern_str(method_name_str), 0);
+		var = gdrb_ruby_builtin_to_godot_variant(ret);
+	} else {
+		godot_variant_call_error p_error;
+		godot_variant callv;
+		godot_string name;
+		api->godot_string_new(&name);
+		api->godot_string_parse_utf8(&name, "test_a");
+		api->godot_variant_new_string(&callv, &name);
+
+		const godot_variant *c_args[] = {
+			&callv
+		};
+		godot_method_bind *method_bind = api->godot_method_bind_get_method("Object", "call");
+		var = api->godot_method_bind_call(method_bind, data->owner, c_args, 1, &p_error);
+		// godot_method_bind *method_bind = api->godot_method_bind_get_method("Node", "test_a");
+		// var = api->godot_method_bind_call(method_bind, data->owner, NULL, 0, &p_error);
+		// api->godot_method_bind_ptrcall(method_bind, data->owner, c_args, &var)
+		printf("testing\n");
+		printf("call error %d", p_error.error);
+
+	}
 	api->godot_string_destroy(&method_name);
+	return var;
 }
 
 void gdrb_ruby_instance_notification(godot_pluginscript_instance_data *p_data, int p_notification) {

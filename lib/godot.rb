@@ -1,14 +1,12 @@
 module Godot
   LINKS = {}
+  CLASSES = {}
 
-  def self.require_script path
-    # bad pratice :(
-    klass = nil
-    TracePoint.trace(:class) do |tp|
-      klass = tp.self
-      tp.disable
-    end
-    require path.gsub('res:/', ROOT)
+  def self.require_script raw_path
+    path = raw_path.gsub('res:/', ROOT)
+    klass = instance_eval File.open(path, &:read), raw_path
+    raise unless klass.is_a? Class
+    CLASSES[klass.object_id] = klass
     klass
   end
 end
