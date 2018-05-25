@@ -189,6 +189,8 @@ godot_variant gdrb_ruby_instance_call_method(godot_pluginscript_instance_data *p
 		VALUE ret = rb_funcall(data->object, rb_intern_str(method_name_str), 0);
 		// godot_vector2 *vec = rb_godot_vector2_to_godot(ret);
 		// api->godot_variant_new_vector2(&var, vec);
+		// godot_aabb *aabb = rb_godot_aabb_to_godot(ret);
+		// api->godot_variant_new_aabb(&var, aabb);
 		var = gdrb_ruby_builtin_to_godot_variant(ret);
 	} else {
 		VALUE klass = rb_funcall(data->object, rb_intern("class"), 0);
