@@ -3,6 +3,11 @@ Class.new do
   extends :Object
 
   def _ready
-    super
+    @vector = Godot::Vector2.new(3, 4)
+    p @vector
+  end
+
+  def vector
+    @vector
   end
 end
