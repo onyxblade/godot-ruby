@@ -9,6 +9,13 @@ module Godot
     CLASSES[klass.object_id] = klass
     klass
   end
+
+  def self.call_method obj, name, *args
+    obj.send(name, *args)
+  rescue
+    p $!
+    nil
+  end
 end
 
 require_relative "godot/built_in_type.rb"

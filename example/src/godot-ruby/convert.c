@@ -91,6 +91,50 @@ godot_variant gdrb_ruby_hash_to_godot_variant(VALUE rhash) {
 	return gvar;
 }
 
+godot_variant ruby_object_to_godot_variant(VALUE robject) {
+	switch (TYPE(robject)) {
+		case T_NIL:
+			return gdrb_ruby_nil_to_godot_variant();
+		case T_TRUE:
+			return gdrb_ruby_true_to_godot_variant();
+		case T_FALSE:
+			return gdrb_ruby_false_to_godot_variant();
+		case T_FIXNUM:
+			return gdrb_ruby_fixnum_to_godot_variant(robject);
+		case T_STRING:
+			return gdrb_ruby_string_to_godot_variant(robject);
+		case T_FLOAT:
+			return gdrb_ruby_float_to_godot_variant(robject);
+		case T_SYMBOL:
+			return gdrb_ruby_symbol_to_godot_variant(robject);
+		case T_ARRAY:
+			return gdrb_ruby_array_to_godot_variant(robject);
+		case T_HASH:
+			return gdrb_ruby_hash_to_godot_variant(robject);
+		default: {
+			VALUE godot_module = rb_const_get(rb_cModule, rb_intern("Godot"));
+			VALUE built_in_type_class = rb_const_get(godot_module, rb_intern("BuiltInType"));
+
+			if (RTEST(rb_funcall(robject, rb_intern("is_a?"), 1, built_in_type_class))) {
+				godot_variant var;
+				switch (FIX2LONG(rb_funcall(robject, rb_intern("_type"), 0))) {
+					case GODOT_VARIANT_TYPE_STRING: {
+						godot_string *addr = rb_godot_string_to_godot(robject);
+						api->godot_variant_new_string(&var, addr);
+						return var;
+					}
+					case GODOT_VARIANT_TYPE_VECTOR2: {
+						godot_vector2 *addr = rb_godot_vector2_to_godot(robject);
+						api->godot_variant_new_vector2(&var, addr);
+						return var;
+					}
+				}
+			}
+			return gdrb_ruby_string_to_godot_variant(rb_funcall(robject, rb_intern("to_s"), 0));
+		}
+	}
+}
+
 godot_variant gdrb_ruby_builtin_to_godot_variant(VALUE robject) {
 	switch (TYPE(robject)) {
 		case T_NIL:
@@ -140,3 +184,4 @@ VALUE gdrb_godot_string_name_to_ruby_string(godot_string_name *str) {
 ID gdrb_godot_string_name_to_ruby_symbol(godot_string *str) {
 
 }
+

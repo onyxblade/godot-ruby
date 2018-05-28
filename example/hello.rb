@@ -3,12 +3,12 @@ Class.new do
   extends :Object
 
   def _ready
-    #@vector = Godot::Vector2.new(3, 4)
     @aabb = Godot::Aabb.new(Godot::Vector3.new(3, 4, 5), Godot::Vector3.new(6, 7, 8))
-    p @aabb
+    @string = Godot::String.new("00000")
   end
 
   def vector
     @aabb
+    Godot::Vector2.new(1,2)
   end
 end
