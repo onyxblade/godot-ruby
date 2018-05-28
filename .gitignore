@@ -1,2 +1,4 @@
 *.os
 *.so
+example/src/godot-ruby/generated/built_in_types.c
+lib/godot/generated/built_in_types.rb

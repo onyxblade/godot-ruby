@@ -25,8 +25,5 @@ module Godot
       :tangent
     ]
 
-    def initialize x, y
-      initialize_default x, y
-    end
   end
 end

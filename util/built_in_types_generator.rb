@@ -1,6 +1,8 @@
 require 'json'
 
 class GodotBuiltInClass
+  attr_reader :name
+
   def initialize name, type
     @@classes ||= {}
     @name = name
@@ -13,9 +15,10 @@ class GodotBuiltInClass
   end
 
   def get_constructors
-    json = JSON.parse File.open("D:/godot_headers/gdnative_api.json", &:read)
-    constructors = json['core']['api'].select{|x| x['name'].match(/godot_#{c_name}_new($|_with)/)}
-    constructors
+    json = JSON.parse File.open("/home/cichol/godot_headers/gdnative_api.json", &:read)
+    constructors = json['core']['api'].select{|x| x['name'].match(/godot_#{c_name}_new/)}
+    # for godot_basis_new and new_identity
+    constructors.select{|x| x['arguments'].size > 1}
   end
 
   def strip_type_sign sign
@@ -31,7 +34,6 @@ class GodotBuiltInClass
     case @type
     when :stack
       get_constructors.map do |defn|
-        next if defn['name'] == 'godot_basis_new'
         actual_arguments = defn['arguments'][1..-1]
         params = actual_arguments.map{|arg|
           "VALUE #{arg[1]}"
@@ -45,7 +47,7 @@ class GodotBuiltInClass
         <<~EOF
           VALUE rb_#{function_name}(VALUE self, #{params}){
             godot_#{c_name} *addr = api->godot_alloc(sizeof(godot_#{c_name}));
-            api->godot_vector2_new(addr, #{args});
+            api->#{defn['name']}(addr, #{args});
             return rb_iv_set(self, "@_godot_address", LONG2NUM((long)addr));
           }
         EOF
@@ -76,7 +78,7 @@ class GodotBuiltInClass
   def from_godot_call name
     case @type
     when :simple
-      @simple_from_godot.call name
+      @simple_from_godot.call name.gsub('&', '')
     else
       "rb_godot_#{c_name}_from_godot(#{name})"
     end
@@ -149,12 +151,85 @@ class GodotBuiltInClass
   def definitions
     [initialize_definitions, to_godot_definition, from_godot_definition, finalize_definition].flatten.join("\n") if !simple?
   end
+
+  def ruby_class_name
+    if simple?
+      @simple_ruby_class
+    else
+      "Godot::#{name}"
+    end
+  end
+
+  def ruby_initialize_definition
+    branches = get_constructors.map do |defn|
+      when_statement = defn['arguments'][1..-1].map.with_index do |(sign, name), index|
+        "args[#{index}].is_a?(#{get_klass(sign).ruby_class_name})"
+      end.join(' && ')
+      "when #{when_statement} then #{defn['name'].gsub("godot_#{c_name}_new", "_initialize")}(*args)"
+    end.join("\n")
+    <<~EOF
+      def initialize *args
+        case
+        #{branches}
+        else
+          raise "mismatched arguments"
+        end
+      end
+    EOF
+  end
+
+  def ruby_definition
+    <<~EOF if !simple?
+      module Godot
+        class #{name} < Godot::BuiltInType
+          #{ruby_initialize_definition}
+        end
+      end
+    EOF
+  end
+
+  def register_methods
+    return if simple?
+    initializers = get_constructors.map do |defn|
+      initializer_name = "#{defn['name'].gsub("godot_#{c_name}_new", "_initialize")}"
+      "rb_define_method(#{c_name}_class, \"#{initializer_name}\", &rb_godot_#{c_name}#{initializer_name}, #{defn['arguments'].size - 1});"
+    end.join("\n")
+    <<~EOF
+      VALUE #{c_name}_class = rb_const_get(godot_module, rb_intern("#{name}"));
+      #{initializers}
+      rb_define_method(#{c_name}_class, "finalize", &rb_godot_#{c_name}_finalize, 0);
+    EOF
+  end
+
+  def self.generate_c
+    klasses = @@classes.values
+    defns = klasses.map do |klass|
+      klass.definitions
+    end
+    <<~EOF
+      #{defns.join}
+      void init() {
+        VALUE godot_module = rb_const_get(rb_cModule, rb_intern("Godot"));
+
+        #{klasses.map(&:register_methods).join}
+      }
+    EOF
+  end
+
+  def self.generate_ruby
+    @@classes.values.map do |klass|
+      klass.ruby_definition
+    end.join
+  end
+
+  def declare_simple_ruby_class name
+    @simple_ruby_class = name
+  end
 end
 
 def declare name, type, &block
   klass = GodotBuiltInClass.new name, type
   klass.instance_eval(&block)
-  puts klass.definitions
 end
 
 declare :Real, :simple do
@@ -165,6 +240,8 @@ declare :Real, :simple do
   declare_simple_to_godot do |name|
     "NUM2DBL(#{name})"
   end
+
+  declare_simple_ruby_class "Numeric"
 end
 
 declare :Vector2, :stack do
@@ -248,3 +325,6 @@ declare :String, :heap do
   EOF
 end
 =end
+
+File.open("../example/src/godot-ruby/generated/built_in_types.c", 'w'){|f| f.write GodotBuiltInClass.generate_c }
+File.open("../lib/godot/generated/built_in_types.rb", 'w'){|f| f.write GodotBuiltInClass.generate_ruby }

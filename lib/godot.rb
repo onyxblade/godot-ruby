@@ -13,6 +13,8 @@ end
 
 require_relative "godot/built_in_type.rb"
 require_relative "godot/built_in_types/object.rb"
+require_relative "godot/generated/built_in_types.rb"
+
 Dir.glob("#{__dir__}/godot/**/*.rb").each do |file|
   require file
 end

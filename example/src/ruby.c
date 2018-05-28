@@ -6,6 +6,6 @@
 #include "godot-ruby/convert.h"
 #include "godot-ruby/debug.h"
 #include "godot-ruby/convert.c"
-#include "godot-ruby/godot_built_in_types.c"
+#include "godot-ruby/generated/built_in_types.c"
 #include "godot-ruby/pluginscript.c"
 #include "godot-ruby/debug.c"
