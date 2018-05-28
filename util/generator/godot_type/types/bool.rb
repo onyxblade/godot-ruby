@@ -1,18 +1,18 @@
 module GodotType
   module Types
-    class Real < Simple
-      ID = 3
+    class Bool < Simple
+      ID = 1
 
       def from_godot_call name
-        "DBL2NUM(#{super name})"
+        "(#{super name} ? Qtrue: Qfalse)"
       end
 
       def to_godot_call name
-        "NUM2DBL(#{super name})"
+        "(RTEST(#{super name}) ? GODOT_TRUE : GODOT_FALSE)"
       end
 
       def type_checker
-        'Numeric'
+        Object
       end
 
     end

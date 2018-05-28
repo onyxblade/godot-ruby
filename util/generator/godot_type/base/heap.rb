@@ -1,5 +1,5 @@
 module GodotType
-  class Heap < Base
+  class Heap < Struct
     def initializer_function initializer
       <<~EOF
         VALUE rb_godot_#{c_name}_initialize(VALUE self, VALUE value){
@@ -80,6 +80,17 @@ module GodotType
 
     def functions
       [initializer_function, to_godot_function, from_godot_function, finalizer_function].flatten.join("\n")
+    end
+
+    def instance_functions
+    end
+
+    def to_godot_call name
+      "rb_godot_#{c_name}_to_godot(#{name})"
+    end
+
+    def from_godot_call name
+      "rb_godot_#{c_name}_from_godot(#{name})"
     end
   end
 end

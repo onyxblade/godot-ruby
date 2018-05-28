@@ -6,6 +6,7 @@ module GodotType
     end
     <<~EOF
       #{defns.join}
+      #{klasses.map{|klass| klass.instance_functions}.join}
       void init() {
         VALUE godot_module = rb_const_get(rb_cModule, rb_intern("Godot"));
 

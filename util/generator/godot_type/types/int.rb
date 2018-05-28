@@ -1,14 +1,14 @@
 module GodotType
   module Types
-    class Real < Simple
-      ID = 3
+    class Int < Simple
+      ID = 2
 
       def from_godot_call name
-        "DBL2NUM(#{super name})"
+        "LONG2NUM(#{super name})"
       end
 
       def to_godot_call name
-        "NUM2DBL(#{super name})"
+        "NUM2LONG(#{super name})"
       end
 
       def type_checker

@@ -8,5 +8,16 @@ module GodotType
 
     def class_definition
     end
+
+    def instance_functions
+    end
+
+    def from_godot_call name
+      name.gsub('&', '')
+    end
+
+    def to_godot_call name
+      name.gsub('&', '')
+    end
   end
 end
