@@ -1,23 +1,21 @@
-Dir.glob("#{__dir__}/generator/**/*.rb").each do |file|
+require 'json'
+
+require_relative 'generator/godot_type'
+require_relative 'generator/godot_type/base/base'
+require_relative 'generator/godot_type/base/simple'
+require_relative 'generator/godot_type/base/stack'
+require_relative 'generator/godot_type/base/heap'
+
+Dir.glob("#{__dir__}/generator/godot_type/types/*.rb").each do |file|
   require file
 end
 
-class GodotClass::Real < GodotClass::Simple
-  def from_godot_call name
-    "DBL2NUM(#{name})"
-  end
+puts GodotType::Types::Vector2.instance.instance_functions
 
-  def to_godot_call
-    "NUM2DBL(#{name})"
-  end
-
-  def type_checker
-    "Numeric"
-  end
-end
-
-class GodotClass::Vector < GodotClass::OnStack
-  def from_godot
-
-  end
-end
+=begin
+File.open("../example/src/godot-ruby/generated/built_in_types.c", 'w'){|f|
+  f.write "extern const godot_gdnative_core_api_struct *api;\n"
+  f.write GodotType.generate_functions
+}
+File.open("../lib/godot/generated/built_in_types.rb", 'w'){|f| f.write GodotType.generate_classes }
+=end
