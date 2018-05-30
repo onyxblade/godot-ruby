@@ -1,21 +1,27 @@
 require 'json'
 
-require_relative 'generator/godot_type'
-require_relative 'generator/godot_type/base/base'
-require_relative 'generator/godot_type/base/function'
-require_relative 'generator/godot_type/base/struct'
-require_relative 'generator/godot_type/base/simple'
-require_relative 'generator/godot_type/base/stack'
-require_relative 'generator/godot_type/base/heap'
+require_relative 'generator'
+require_relative 'generator/type'
+require_relative 'generator/type/base'
+require_relative 'generator/type/struct'
+require_relative 'generator/type/stack'
+require_relative 'generator/type/stack_pointer'
+require_relative 'generator/type/heap'
+require_relative 'generator/type/heap_pointer'
+require_relative 'generator/types'
+require_relative 'generator/class'
+require_relative 'generator/class/base'
+require_relative 'generator/class/struct'
+require_relative 'generator/class/stack'
+require_relative 'generator/class/heap'
+require_relative 'generator/function'
+require_relative 'generator/function/argument'
 
-Dir.glob("#{__dir__}/generator/godot_type/types/*.rb").each do |file|
+Dir.glob("#{__dir__}/generator/classes/*.rb").each do |file|
   require file
 end
 
-#p GodotType::Types::Transform2D.instance.api_functions.select(&:constructor?)
-
-File.open("../example/src/godot-ruby/generated/built_in_types.c", 'w'){|f|
-  f.write "extern const godot_gdnative_core_api_struct *api;\n"
-  f.write GodotType.generate_functions
-}
-File.open("../lib/godot/generated/built_in_types.rb", 'w'){|f| f.write GodotType.generate_classes }
+#puts Godot::Generator::Class.generate_class_static_definitions
+#puts Godot::Generator::Type.generate_godot_convert_functions
+#puts Godot::Generator::Class.generate_class_initialization_statements
+puts Godot::Generator::Class.get_class(:Vector2).instance_functions
