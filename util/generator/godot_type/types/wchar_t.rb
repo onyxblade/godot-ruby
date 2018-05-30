@@ -8,8 +8,8 @@ module GodotType
             VALUE string_class = rb_const_get(godot_module, rb_intern("String"));
             godot_string str;
             api->godot_string_new_with_wide_string(&str, addr, 1);
-            VALUE obj = rb_funcall(string_class, rb_intern("allocate"), 0);
-            return rb_iv_set(obj, "@_godot_address", LONG2NUM((long)&str));
+            VALUE obj = rb_funcall(string_class, rb_intern("_allocate_and_set_address"), 1, LONG2NUM((long)&str));
+            return obj;
           }
         EOF
       end

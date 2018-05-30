@@ -12,8 +12,7 @@ module GodotType
 
     def finalizer_function
       <<~EOF
-        VALUE rb_godot_#{c_name}_finalize (VALUE self) {
-          VALUE addr = rb_iv_get(self, "@_godot_address");
+        VALUE rb_godot_#{c_name}_finalize (VALUE self, VALUE addr) {
           api->godot_#{c_name}_destroy((godot_#{c_name}*)NUM2LONG(addr));
           api->godot_free((void*)NUM2LONG(addr));
           return Qtrue;
@@ -26,10 +25,10 @@ module GodotType
         VALUE rb_godot_#{c_name}_from_godot (godot_#{c_name} *addr) {
           VALUE godot_module = rb_const_get(rb_cModule, rb_intern("Godot"));
           VALUE #{c_name}_class = rb_const_get(godot_module, rb_intern("#{name}"));
-          VALUE obj = rb_funcall(#{c_name}_class, rb_intern("allocate"), 0);
           godot_#{c_name} copy;
           api->godot_#{c_name}_new_copy(&copy, addr);
-          return rb_iv_set(obj, "@_godot_address", LONG2NUM((long)&copy));
+          VALUE obj = rb_funcall(#{c_name}_class, rb_intern("_allocate_and_set_address"), 1, LONG2NUM((long)addr));
+          return obj;
         }
       EOF
     end
@@ -51,6 +50,7 @@ module GodotType
           else
             raise "mismatched arguments"
           end
+          ObjectSpace.define_finalizer(self, self.class.finalizer_proc(@_godot_address))
         end
       EOF
     end
@@ -60,7 +60,7 @@ module GodotType
       <<~EOF
         VALUE #{c_name}_class = rb_const_get(godot_module, rb_intern("#{name}"));
         #{initializers}
-        rb_define_method(#{c_name}_class, "finalize", &rb_godot_#{c_name}_finalize, 0);
+        rb_define_singleton_method(#{c_name}_class, "_finalize", &rb_godot_#{c_name}_finalize, 0);
       EOF
     end
 
