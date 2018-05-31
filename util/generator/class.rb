@@ -61,6 +61,12 @@ module Godot::Generator
         end
       end
 
+      def generate_class_type_functions
+        classes.values.map do |c|
+          c.type_function
+        end
+      end
+
     end
   end
 end

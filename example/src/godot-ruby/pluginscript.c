@@ -175,7 +175,6 @@ godot_bool gdrb_ruby_instance_get_prop(godot_pluginscript_instance_data *p_data,
 
 godot_variant gdrb_ruby_instance_call_method(godot_pluginscript_instance_data *p_data, const godot_string_name *p_method, const godot_variant **p_args, int p_argcount, godot_variant_call_error *r_error) {
 	printf("instance_call_method\n");
-	print_godot_string_name(p_method);
 	gdrb_pluginscript_instance_data *data = (gdrb_pluginscript_instance_data*) p_data;
 
 	godot_string method_name = api->godot_string_name_get_name(p_method);
@@ -193,8 +192,6 @@ godot_variant gdrb_ruby_instance_call_method(godot_pluginscript_instance_data *p
 		VALUE klass = rb_funcall(data->object, rb_intern("class"), 0);
 		VALUE base_name_symbol = rb_funcall(klass, rb_intern("base_name"), 0);
 		VALUE base_name = rb_funcall(base_name_symbol, rb_intern("to_s"), 0);
-
-		rb_funcall(rb_cObject, rb_intern("p"), 1, base_name);
 
 		godot_method_bind *method;
 		wchar_t *wchars = api->godot_string_wide_str(&method_name);

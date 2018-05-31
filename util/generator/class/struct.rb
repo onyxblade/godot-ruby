@@ -58,9 +58,13 @@ module Godot::Generator
         end
       end
 
+      def variant_type_enum_name
+        "GODOT_VARIANT_TYPE_#{type_name.gsub("godot_", '')}".upcase
+      end
+
       def variant_from_godot_branch
         <<~EOF
-          case #{type_id}: {
+          case #{variant_type_enum_name}: {
             #{type_name} val = api->godot_variant_as_#{type_name.gsub('godot_', '')}(&addr);
             ret = #{Godot::Generator::Type.get_type(type_name).from_godot 'val'};
             break;
@@ -70,10 +74,18 @@ module Godot::Generator
 
       def variant_to_godot_branch
         <<~EOF
-          case #{type_id}: {
+          case #{variant_type_enum_name}: {
             #{type_name} *addr = #{Godot::Generator::Type.get_type("#{type_name} *").to_godot 'self'};
             api->godot_variant_new_#{type_name.gsub('godot_', '')}(&var, addr);
             break;
+          }
+        EOF
+      end
+
+      def type_function
+        <<~EOF
+          VALUE rb_#{type_name}_type(VALUE self) {
+            return LONG2FIX(#{variant_type_enum_name});
           }
         EOF
       end

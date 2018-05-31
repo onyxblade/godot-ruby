@@ -51,7 +51,12 @@ module Godot::Generator
     end
 
     def ignore_functions
-      ['godot_string_get_slicec']
+      [
+        'godot_string_get_slicec',
+        'godot_dictionary_hash',
+        'godot_string_hash',
+        'godot_array_hash'
+      ]
     end
 
     def arguments

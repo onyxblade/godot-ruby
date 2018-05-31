@@ -1,7 +1,6 @@
 module Godot::Generator
   module Classes
     class String < Godot::Generator::Class::Heap
-      ID = 4
 
       def initializer_function
         super <<~EOF

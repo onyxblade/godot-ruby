@@ -8,7 +8,7 @@ module Godot
         f.write Godot::Generator::Class.generate_class_initializer_functions.join
         f.write Godot::Generator::Class.generate_class_finalizer_functions.join
         f.write Godot::Generator::Class.generate_class_instance_functions.join
-
+        f.write Godot::Generator::Class.generate_class_type_functions.join
         f.write <<~EOF
           void init() {
             #{Godot::Generator::Class.generate_class_initialization_statements}

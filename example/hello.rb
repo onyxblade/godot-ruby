@@ -8,8 +8,12 @@ end
 def vector
   @aabb
   Godot::Vector2.new(1,2).normalized()
-  a = Array.new([1, 2])
-  a.append(a: 1)
-  a.append("zxcvzxcv")
-  a
+  #a = Dictionary.new(a: 2, b: 'zxcv')
+  #p a.keys.get(0).to_s
+  #p String.new('zxcv').to_s
+  #a = Array.new([String.new("abc")])
+  a = Array.new([])
+  a.append(String.new("abc"))
+  # p a.get(0).to_s
+  nil
 end

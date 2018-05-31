@@ -46,7 +46,8 @@ module Godot::Generator
           "rb_define_method(#{name}_class, \"#{method_name}\", &rb_#{type_name}_#{method_name}, #{func.arguments.size - 1});"
         end
         finalizer = "rb_define_singleton_method(#{name}_class, \"_finalize\", &rb_#{type_name}_finalize, 0);"
-        [initializer, methods, finalizer].flatten
+        type_func = "rb_define_method(#{name}_class, \"_type\", &rb_#{type_name}_type, 0);"
+        [initializer, methods, finalizer, type_func].flatten
       end
 
       def class_definition
@@ -54,10 +55,6 @@ module Godot::Generator
           module Godot
             class #{name} < Godot::BuiltInType
               #{initialize_method}
-
-              def _type
-                #{type_id}
-              end
             end
           end
         EOF

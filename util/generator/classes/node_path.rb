@@ -1,7 +1,6 @@
 module Godot::Generator
   module Classes
     class NodePath < Godot::Generator::Class::Heap
-      ID = 15
 
       def type_name
         'godot_node_path'
