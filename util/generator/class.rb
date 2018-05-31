@@ -16,7 +16,7 @@ module Godot::Generator
 
       def generate_class_static_definitions
         classes.values.map do |c|
-          "static VALUE #{c.name}_class;"
+          "static VALUE #{c.name}_class;\n"
         end
       end
 
@@ -32,11 +32,33 @@ module Godot::Generator
       end
 
       def generate_class_initializer_functions
-
+        classes.values.map do |c|
+          c.initializer_functions
+        end
       end
 
       def generate_class_finalizer_functions
+        classes.values.map do |c|
+          c.finalizer_function
+        end
+      end
 
+      def generate_class_instance_functions
+        classes.values.map do |c|
+          c.instance_functions
+        end
+      end
+
+      def generate_class_register_method_statements
+        classes.values.map do |c|
+          c.register_method_statements
+        end
+      end
+
+      def generate_class_ruby_definitions
+        classes.values.map do |c|
+          c.class_definition
+        end
       end
 
     end

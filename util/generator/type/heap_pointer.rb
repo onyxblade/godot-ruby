@@ -4,9 +4,9 @@ module Godot::Generator
       def from_godot_function
         <<~EOF
           VALUE rb_#{type_name}_from_godot (#{signature} addr) {
-            #{signature_without_star} copy;
-            api->#{signature_without_star}_new_copy(&copy, addr);
-            VALUE obj = rb_funcall(#{target_class_name}, rb_intern("_allocate_and_set_address"), 1, LONG2NUM((long)addr));
+            // #{signature_without_star} copy;
+            // api->#{signature_without_star}_new_copy(&copy, addr);
+            VALUE obj = rb_funcall(#{target_class_name}_class, rb_intern("_adopt"), 1, LONG2NUM((long)addr));
             return obj;
           }
         EOF

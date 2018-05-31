@@ -8,4 +8,5 @@ end
 def vector
   @aabb
   Godot::Vector2.new(1,2).normalized()
+  String.new("We're waiting for {str}").format({"str": "Godot"})
 end

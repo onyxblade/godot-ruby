@@ -6,7 +6,7 @@ module Godot::Generator
           VALUE rb_#{type_name}_from_godot (#{signature} addr) {
             #{signature_without_star} *naddr = api->godot_alloc(sizeof(#{signature_without_star}));
             memcpy(naddr, addr, sizeof(#{signature_without_star}));
-            VALUE obj = rb_funcall(#{target_class_name}_class, rb_intern("_allocate_and_set_address"), 1, LONG2NUM((long)naddr));
+            VALUE obj = rb_funcall(#{target_class_name}_class, rb_intern("_adopt"), 1, LONG2NUM((long)naddr));
             return obj;
           }
         EOF

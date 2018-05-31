@@ -1,7 +1,7 @@
 
 extern const godot_gdnative_core_api_struct *api;
 
-godot_variant gdrb_ruby_builtin_to_godot_variant(VALUE robject);
+godot_variant rb_godot_variant_to_godot(VALUE robject);
 
 godot_variant gdrb_ruby_nil_to_godot_variant() {
 	godot_variant gvar;
@@ -58,7 +58,7 @@ godot_variant gdrb_ruby_array_to_godot_variant(VALUE rarray) {
 	api->godot_array_new(&gary);
 
 	for (int i=0; i < RARRAY_LEN(rarray); ++i) {
-		godot_variant ary_var = gdrb_ruby_builtin_to_godot_variant(RARRAY_AREF(rarray, i));
+		godot_variant ary_var = rb_godot_variant_to_godot(RARRAY_AREF(rarray, i));
 		api->godot_array_append(&gary, &ary_var);
 		api->godot_variant_destroy(&ary_var);
 	}
@@ -79,8 +79,8 @@ godot_variant gdrb_ruby_hash_to_godot_variant(VALUE rhash) {
 	for (int i=0; i < RARRAY_LEN(pairs); ++i) {
 		godot_variant key, value;
 		VALUE pair = RARRAY_AREF(pairs, i);
-		key = gdrb_ruby_builtin_to_godot_variant(RARRAY_AREF(pair, 0));
-		value = gdrb_ruby_builtin_to_godot_variant(RARRAY_AREF(pair, 1));
+		key = rb_godot_variant_to_godot(RARRAY_AREF(pair, 0));
+		value = rb_godot_variant_to_godot(RARRAY_AREF(pair, 1));
 		api->godot_dictionary_set(&gdic, &key, &value);
 		api->godot_variant_destroy(&key);
 		api->godot_variant_destroy(&value);
@@ -89,75 +89,6 @@ godot_variant gdrb_ruby_hash_to_godot_variant(VALUE rhash) {
 	api->godot_variant_new_dictionary(&gvar, &gdic);
 	api->godot_dictionary_destroy(&gdic);
 	return gvar;
-}
-
-godot_variant ruby_object_to_godot_variant(VALUE robject) {
-	switch (TYPE(robject)) {
-		case T_NIL:
-			return gdrb_ruby_nil_to_godot_variant();
-		case T_TRUE:
-			return gdrb_ruby_true_to_godot_variant();
-		case T_FALSE:
-			return gdrb_ruby_false_to_godot_variant();
-		case T_FIXNUM:
-			return gdrb_ruby_fixnum_to_godot_variant(robject);
-		case T_STRING:
-			return gdrb_ruby_string_to_godot_variant(robject);
-		case T_FLOAT:
-			return gdrb_ruby_float_to_godot_variant(robject);
-		case T_SYMBOL:
-			return gdrb_ruby_symbol_to_godot_variant(robject);
-		case T_ARRAY:
-			return gdrb_ruby_array_to_godot_variant(robject);
-		case T_HASH:
-			return gdrb_ruby_hash_to_godot_variant(robject);
-		default: {
-			VALUE godot_module = rb_const_get(rb_cModule, rb_intern("Godot"));
-			VALUE built_in_type_class = rb_const_get(godot_module, rb_intern("BuiltInType"));
-
-			if (RTEST(rb_funcall(robject, rb_intern("is_a?"), 1, built_in_type_class))) {
-				godot_variant var;
-				switch (FIX2LONG(rb_funcall(robject, rb_intern("_type"), 0))) {
-					case GODOT_VARIANT_TYPE_STRING: {
-						godot_string *addr = rb_godot_string_to_godot(robject);
-						api->godot_variant_new_string(&var, addr);
-						return var;
-					}
-					case GODOT_VARIANT_TYPE_VECTOR2: {
-						godot_vector2 *addr = rb_godot_vector2_to_godot(robject);
-						api->godot_variant_new_vector2(&var, addr);
-						return var;
-					}
-				}
-			}
-			return gdrb_ruby_string_to_godot_variant(rb_funcall(robject, rb_intern("to_s"), 0));
-		}
-	}
-}
-
-godot_variant gdrb_ruby_builtin_to_godot_variant(VALUE robject) {
-	switch (TYPE(robject)) {
-		case T_NIL:
-			return gdrb_ruby_nil_to_godot_variant();
-		case T_TRUE:
-			return gdrb_ruby_true_to_godot_variant();
-		case T_FALSE:
-			return gdrb_ruby_false_to_godot_variant();
-		case T_FIXNUM:
-			return gdrb_ruby_fixnum_to_godot_variant(robject);
-		case T_STRING:
-			return gdrb_ruby_string_to_godot_variant(robject);
-		case T_FLOAT:
-			return gdrb_ruby_float_to_godot_variant(robject);
-		case T_SYMBOL:
-			return gdrb_ruby_symbol_to_godot_variant(robject);
-		case T_ARRAY:
-			return gdrb_ruby_array_to_godot_variant(robject);
-		case T_HASH:
-			return gdrb_ruby_hash_to_godot_variant(robject);
-		default:
-			return gdrb_ruby_string_to_godot_variant(rb_funcall(robject, rb_intern("to_s"), 0));
-	}
 }
 
 void gdrb_handle_ruby_exception() {

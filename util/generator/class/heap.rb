@@ -1,7 +1,7 @@
 module Godot::Generator
   module Class
     class Heap < Struct
-      def initializer_function initializer
+      def initializer_function initializer = nil
         <<~EOF
           VALUE rb_#{type_name}_initialize(VALUE self, VALUE value){
             #{type_name} *addr = api->godot_alloc(sizeof(#{type_name}));
@@ -40,11 +40,15 @@ module Godot::Generator
       end
 
       def register_method_statements
-        initializers = "rb_define_method(string_class, \"_initialize\", &rb_godot_#{c_name}_initialize, 1);"
+        initializer = "rb_define_method(#{name}_class, \"_initialize\", &rb_#{type_name}_initialize, 1);"
+        methods = instance_methods.map do |func|
+          method_name = "#{func.name.gsub("#{type_name}_", '')}"
+          "rb_define_method(#{name}_class, \"#{method_name}\", &rb_#{type_name}_#{method_name}, #{func.arguments.size - 1});"
+        end.join("\n")
         <<~EOF
-          VALUE #{c_name}_class = rb_const_get(godot_module, rb_intern("#{name}"));
-          #{initializers}
-          rb_define_singleton_method(#{c_name}_class, "_finalize", &rb_godot_#{c_name}_finalize, 0);
+          #{initializer}
+          #{methods}
+          rb_define_singleton_method(#{name}_class, "_finalize", &rb_#{type_name}_finalize, 0);
         EOF
       end
 
@@ -62,12 +66,16 @@ module Godot::Generator
         EOF
       end
 
+      def initializer_functions
+        [initializer_function]
+      end
+
       def functions
         [initializer_function, to_godot_function, from_godot_function, finalizer_function].flatten.join("\n")
       end
 
-      def instance_functions
-      end
+      #def instance_functions
+      #end
 
       def to_godot_call name
         "rb_godot_#{c_name}_to_godot(#{name})"

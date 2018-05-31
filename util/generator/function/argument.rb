@@ -11,6 +11,10 @@ module Godot::Generator
       def type
         Godot::Generator::Type.get_type @type
       end
+
+      def variant_pointer?
+        type.name == 'godot_variant_pointer'
+      end
     end
   end
 end

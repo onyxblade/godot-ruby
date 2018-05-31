@@ -51,8 +51,8 @@ void gdrb_add_global_constant(godot_pluginscript_language_data *p_data, const go
 VALUE gdrb_object_call(VALUE self, VALUE method_name, VALUE method_args) {
 	VALUE rpointer = rb_funcall(self, rb_intern("godot_pointer"), 0);
 	godot_object *pointer = (godot_object *)NUM2LONG(rpointer);
-	godot_variant gv_args = gdrb_ruby_builtin_to_godot_variant(method_args);
-	godot_variant gv_name = gdrb_ruby_builtin_to_godot_variant(method_name);
+	godot_variant gv_args = rb_godot_variant_to_godot(method_args);
+	godot_variant gv_name = rb_godot_variant_to_godot(method_name);
 
 	godot_variant_call_error p_error;
 	godot_method_bind *method_bind = api->godot_method_bind_get_method("Object", "callv");
@@ -116,7 +116,7 @@ godot_pluginscript_script_manifest gdrb_ruby_script_init(godot_pluginscript_lang
 	api->godot_array_new(&methods);
 
 	VALUE method_hash = rb_eval_string("{name: 'test_a', args: [], default_args: [], return: {}, flags: 0, rpc_mode: 0}");
-	godot_variant method_dict = gdrb_ruby_builtin_to_godot_variant(method_hash);
+	godot_variant method_dict = rb_godot_variant_to_godot(method_hash);
 	api->godot_array_append(&methods, &method_dict);
 	api->godot_variant_destroy(&method_dict);
 
@@ -189,7 +189,7 @@ godot_variant gdrb_ruby_instance_call_method(godot_pluginscript_instance_data *p
 		VALUE godot_module = rb_const_get(rb_cModule, rb_intern("Godot"));
 		VALUE ret = rb_funcall(godot_module, rb_intern("call_method"), 2, data->object, method_name_str);
 
-		var = ruby_object_to_godot_variant(ret);
+		var = rb_godot_variant_to_godot(ret);
 	} else {
 		VALUE klass = rb_funcall(data->object, rb_intern("class"), 0);
 		VALUE base_name_symbol = rb_funcall(klass, rb_intern("base_name"), 0);

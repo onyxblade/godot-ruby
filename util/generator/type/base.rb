@@ -7,7 +7,7 @@ module Godot::Generator
       end
 
       def signature
-        @signature.gsub(' ', '')
+        @signature.gsub('const ', '')
       end
 
       def name

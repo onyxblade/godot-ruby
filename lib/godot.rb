@@ -14,6 +14,7 @@ module Godot
     obj.send(name, *args)
   rescue
     p $!
+    p $!.backtrace
     nil
   end
 end

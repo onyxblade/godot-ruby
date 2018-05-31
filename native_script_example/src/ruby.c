@@ -61,8 +61,6 @@ GDCALLINGCONV void *gdrb_constructor(godot_object *p_instance, void *p_method_da
 GDCALLINGCONV void gdrb_destructor(godot_object *p_instance, void *p_method_data, void *p_user_data) {
 }
 
-godot_variant gdrb_ruby_builtin_to_godot_variant(VALUE robject);
-
 godot_variant gdrb_ruby_nil_to_godot_variant() {
 	godot_variant gvar;
 	api->godot_variant_new_nil(&gvar);
@@ -118,7 +116,7 @@ godot_variant gdrb_ruby_array_to_godot_variant(VALUE rarray) {
 	api->godot_array_new(&gary);
 
 	for (int i=0; i < RARRAY_LEN(rarray); ++i) {
-		godot_variant ary_var = gdrb_ruby_builtin_to_godot_variant(RARRAY_AREF(rarray, i));
+		godot_variant ary_var = rb_godot_variant_to_godot(RARRAY_AREF(rarray, i));
 		api->godot_array_append(&gary, &ary_var);
 		api->godot_variant_destroy(&ary_var);
 	}
@@ -139,8 +137,8 @@ godot_variant gdrb_ruby_hash_to_godot_variant(VALUE rhash) {
 	for (int i=0; i < RARRAY_LEN(pairs); ++i) {
 		godot_variant key, value;
 		VALUE pair = RARRAY_AREF(pairs, i);
-		key = gdrb_ruby_builtin_to_godot_variant(RARRAY_AREF(pair, 0));
-		value = gdrb_ruby_builtin_to_godot_variant(RARRAY_AREF(pair, 1));
+		key = rb_godot_variant_to_godot(RARRAY_AREF(pair, 0));
+		value = rb_godot_variant_to_godot(RARRAY_AREF(pair, 1));
 		api->godot_dictionary_set(&gdic, &key, &value);
 		api->godot_variant_destroy(&key);
 		api->godot_variant_destroy(&value);

@@ -16,8 +16,6 @@ godot_variant gdrb_ruby_array_to_godot_variant(VALUE rarray);
 
 godot_variant gdrb_ruby_hash_to_godot_variant(VALUE rhash);
 
-godot_variant gdrb_ruby_builtin_to_godot_variant(VALUE robject);
-
 void gdrb_handle_ruby_exception();
 
 VALUE gdrb_godot_string_to_ruby_string(const godot_string *str);
