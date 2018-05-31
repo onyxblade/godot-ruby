@@ -4,7 +4,7 @@ module Godot::Generator
       def from_godot_function
         <<~EOF
           VALUE rb_#{type_name}_from_godot (#{signature} addr) {
-            #{signature_without_star} *naddr = api->godot_alloc(sizeof(#{signature_without_star}));
+            #{signature} naddr = api->godot_alloc(sizeof(#{signature_without_star}));
             memcpy(naddr, addr, sizeof(#{signature_without_star}));
             VALUE obj = rb_funcall(#{target_class_name}_class, rb_intern("_adopt"), 1, LONG2NUM((long)naddr));
             return obj;

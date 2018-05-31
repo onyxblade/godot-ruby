@@ -4,9 +4,11 @@ module Godot::Generator
       def from_godot_function
         <<~EOF
           VALUE rb_#{type_name}_from_godot (#{signature} addr) {
-            // #{signature_without_star} copy;
-            // api->#{signature_without_star.gsub(' ', '')}_new_copy(&copy, addr);
-            VALUE obj = rb_funcall(#{target_class_name}_class, rb_intern("_adopt"), 1, LONG2NUM((long)addr));
+            #{signature} naddr = api->godot_alloc(sizeof(#{signature_without_star}));
+            memcpy(naddr, addr, sizeof(#{signature_without_star}));
+            // will copy increase the reference count?
+            // api->#{type_name.gsub('_pointer', '')}_new_copy(naddr, addr);
+            VALUE obj = rb_funcall(#{target_class_name}_class, rb_intern("_adopt"), 1, LONG2NUM((long)naddr));
             return obj;
           }
         EOF

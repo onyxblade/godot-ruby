@@ -96,7 +96,7 @@ godot_pluginscript_script_manifest gdrb_ruby_script_init(godot_pluginscript_lang
 	VALUE klass = rb_funcall(godot_module, rb_intern("require_script"), 1, rb_funcall(r_path, rb_intern("to_s"), 0));
 
 	gdrb_pluginscript_script_data *data;
-	data = (gdrb_pluginscript_script_data*)malloc(sizeof(gdrb_pluginscript_script_data));
+	data = (gdrb_pluginscript_script_data*)api->godot_alloc(sizeof(gdrb_pluginscript_script_data));
 	data->klass = klass;
 
 	data->links = rb_const_get(godot_module, rb_intern("LINKS"));
@@ -139,14 +139,14 @@ godot_pluginscript_script_manifest gdrb_ruby_script_init(godot_pluginscript_lang
 }
 void gdrb_ruby_script_finish(godot_pluginscript_script_data *p_data) {
 	gdrb_pluginscript_script_data *data = (gdrb_pluginscript_script_data*) p_data;
-	free(p_data);
+	api->godot_free(p_data);
 	printf("script_finish\n");
 }
 
 godot_pluginscript_instance_data *gdrb_ruby_instance_init(godot_pluginscript_script_data *p_data, godot_object *p_owner) {
 	gdrb_pluginscript_script_data *script_data = (gdrb_pluginscript_script_data*) p_data;
 	gdrb_pluginscript_instance_data *data;
-	data = (gdrb_pluginscript_instance_data*)malloc(sizeof(gdrb_pluginscript_instance_data));
+	data = (gdrb_pluginscript_instance_data*)api->godot_alloc(sizeof(gdrb_pluginscript_instance_data));
 
 	VALUE instance = rb_funcall(script_data->klass, rb_intern("new"), 0);
 	VALUE object_id = rb_funcall(instance, rb_intern("object_id"), 0);
@@ -160,7 +160,7 @@ godot_pluginscript_instance_data *gdrb_ruby_instance_init(godot_pluginscript_scr
 }
 
 void gdrb_ruby_instance_finish(godot_pluginscript_instance_data *p_data) {
-	free((gdrb_pluginscript_instance_data*)p_data);
+	api->godot_free(p_data);
 	printf("instance_finish\n");
 }
 
