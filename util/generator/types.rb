@@ -128,6 +128,20 @@ Godot::Generator::Type.register_type(
 )
 
 Godot::Generator::Type.register_type(
+  'godot_array *',
+  method: :heap_pointer,
+  target_class: 'Array',
+  source_class: ['::Array', 'Godot::Array']
+)
+
+Godot::Generator::Type.register_type(
+  'godot_dictionary *',
+  method: :heap_pointer,
+  target_class: 'Dictionary',
+  source_class: ['::Hash', 'Godot::Dictionary']
+)
+
+Godot::Generator::Type.register_type(
   'godot_variant',
   from_godot_function: ->{
     <<~EOF
@@ -156,38 +170,75 @@ Godot::Generator::Type.register_type(
   to_godot_function: ->{
     <<~EOF
       godot_variant rb_godot_variant_to_godot (VALUE self) {
+        godot_variant var;
         switch (TYPE(self)) {
-          case T_NIL:
-            return gdrb_ruby_nil_to_godot_variant();
-          case T_TRUE:
-            return gdrb_ruby_true_to_godot_variant();
-          case T_FALSE:
-            return gdrb_ruby_false_to_godot_variant();
-          case T_FIXNUM:
-            return gdrb_ruby_fixnum_to_godot_variant(self);
-          case T_STRING:
-            return gdrb_ruby_string_to_godot_variant(self);
-          case T_FLOAT:
-            return gdrb_ruby_float_to_godot_variant(self);
-          case T_SYMBOL:
-            return gdrb_ruby_symbol_to_godot_variant(self);
-          case T_ARRAY:
-            return gdrb_ruby_array_to_godot_variant(self);
-          case T_HASH:
-            return gdrb_ruby_hash_to_godot_variant(self);
+          case T_NIL: {
+            api->godot_variant_new_nil(&var);
+            break;
+          }
+          case T_TRUE: {
+            api->godot_variant_new_bool(&var, 1);
+            break;
+          }
+          case T_FALSE: {
+            api->godot_variant_new_bool(&var, 0);
+            break;
+          }
+          case T_FIXNUM: {
+            api->godot_variant_new_int(&var, FIX2LONG(self));
+            break;
+          }
+          case T_STRING: {
+            VALUE r_str = rb_funcall(String_class, rb_intern("new"), 1, self);
+            godot_string *str = rb_godot_string_pointer_to_godot(r_str);
+            api->godot_variant_new_string(&var, str);
+            break;
+          }
+          case T_FLOAT: {
+            api->godot_variant_new_real(&var, RFLOAT_VALUE(self));
+            break;
+          }
+          case T_SYMBOL: {
+            VALUE _str = rb_funcall(self, rb_intern("to_s"), 0);
+            VALUE r_str = rb_funcall(String_class, rb_intern("new"), 1, _str);
+            godot_string *str = rb_godot_string_pointer_to_godot(r_str);
+            api->godot_variant_new_string(&var, str);
+            break;
+          }
+          case T_ARRAY: {
+            VALUE r_ary = rb_funcall(Array_class, rb_intern("new"), 1, self);
+            godot_array *ary = rb_godot_array_pointer_to_godot(r_ary);
+            api->godot_variant_new_array(&var, ary);
+            break;
+          }
+          case T_HASH: {
+            VALUE hsh = rb_funcall(Dictionary_class, rb_intern("new"), 1, self);
+            godot_dictionary *dict = rb_godot_dictionary_pointer_to_godot(hsh);
+            api->godot_variant_new_dictionary(&var, dict);
+            break;
+          }
           default: {
             VALUE godot_module = rb_const_get(rb_cModule, rb_intern("Godot"));
             VALUE built_in_type_class = rb_const_get(godot_module, rb_intern("BuiltInType"));
 
             if (RTEST(rb_funcall(self, rb_intern("is_a?"), 1, built_in_type_class))) {
-              godot_variant var;
               switch (FIX2LONG(rb_funcall(self, rb_intern("_type"), 0))) {
                 #{Godot::Generator::Class.classes.values.map{|c| c.variant_to_godot_branch}.join("\n")}
+                default: {
+                  api->godot_print_error("unknown variant type", "", __FILE__, __LINE__);
+                  api->godot_variant_new_nil(&var);
+                }
               }
+            } else {
+              VALUE _str = rb_funcall(self, rb_intern("to_s"), 0);
+              VALUE r_str = rb_funcall(String_class, rb_intern("new"), 1, _str);
+              godot_string *str = rb_godot_string_pointer_to_godot(r_str);
+              api->godot_variant_new_string(&var, str);
             }
-            return gdrb_ruby_string_to_godot_variant(rb_funcall(self, rb_intern("to_s"), 0));
           }
         }
+
+        return var;
       }
     EOF
   }.(),
@@ -226,6 +277,7 @@ Godot::Generator::Type.register_type(
   }
 )
 
+
 =begin
 
 
@@ -239,15 +291,6 @@ Godot::Generator::Type.register_type(
   }
 )
 
-Godot::Generator::Type.register_type(
-  'godot_array *',
-  from_godot: -> name {
-    "from_array"
-  },
-  to_godot: -> name {
-    "to_array"
-  }
-)
 
 Godot::Generator::Type.register_type(
   'godot_variant',

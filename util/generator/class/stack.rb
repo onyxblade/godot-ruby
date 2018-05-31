@@ -64,16 +64,13 @@ module Godot::Generator
         initializers = constructors.map do |func|
           initializer_name = "#{func.name.gsub("#{type_name}_new", "_initialize")}"
           "rb_define_method(#{name}_class, \"#{initializer_name}\", &rb_#{type_name}#{initializer_name}, #{func.arguments.size - 1});"
-        end.join("\n")
+        end
         methods = instance_methods.map do |func|
           method_name = "#{func.name.gsub("#{type_name}_", '')}"
           "rb_define_method(#{name}_class, \"#{method_name}\", &rb_#{type_name}_#{method_name}, #{func.arguments.size - 1});"
-        end.join("\n")
-        <<~EOF
-          #{initializers}
-          #{methods}
-          rb_define_singleton_method(#{name}_class, "_finalize", &rb_#{type_name}_finalize, 1);
-        EOF
+        end
+        finalizer = "rb_define_singleton_method(#{name}_class, \"_finalize\", &rb_#{type_name}_finalize, 1);"
+        [initializers, methods, finalizer].flatten
       end
 
       def constructors

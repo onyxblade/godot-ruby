@@ -28,10 +28,10 @@ require_relative 'generator/types'
 #puts Godot::Generator::Class.generate_class_initialization_statements
 #puts Godot::Generator::Class.generate_class_initializer_functions
 #puts Godot::Generator::Class.generate_class_finalizer_functions
-#puts Godot::Generator::Class.get_class(:String).instance_functions
+#puts Godot::Generator::Class.get_class(:Array).api_functions
 
 #puts Godot::Generator::Class.get_class(:NodePath).api_functions
 #puts Godot::Generator::Class.get_class(:NodePath).variant_branch
 
 Godot::Generator.generate_c_functions
-#Godot::Generator.generate_ruby_classes
+Godot::Generator.generate_ruby_classes

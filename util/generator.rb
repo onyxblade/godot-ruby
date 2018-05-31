@@ -12,7 +12,7 @@ module Godot
         f.write <<~EOF
           void init() {
             #{Godot::Generator::Class.generate_class_initialization_statements}
-            #{Godot::Generator::Class.generate_class_register_method_statements.join}
+            #{Godot::Generator::Class.generate_class_register_method_statements.join("\n")}
           }
         EOF
       }

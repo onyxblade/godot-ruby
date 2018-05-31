@@ -8,6 +8,10 @@ module Godot
     klass.class_eval(File.open(path, &:read), raw_path)
     CLASSES[klass.object_id] = klass
     klass
+  rescue
+    p $!
+    p $!.backtrace
+    Class.new(Godot::Object)
   end
 
   def self.call_method obj, name, *args

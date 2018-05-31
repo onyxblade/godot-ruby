@@ -1,4 +1,3 @@
-=begin
 module Godot::Generator
   module Classes
     class Array < Godot::Generator::Class::Heap
@@ -15,11 +14,6 @@ module Godot::Generator
           }
         EOF
       end
-
-      def type_checker
-        '::Array'
-      end
     end
   end
 end
-=end

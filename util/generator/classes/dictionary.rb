@@ -1,4 +1,3 @@
-=begin
 module Godot::Generator
   module Classes
     class Dictionary < Godot::Generator::Class::Heap
@@ -13,8 +12,8 @@ module Godot::Generator
           for (int i=0; i < RARRAY_LEN(pairs); ++i) {
             godot_variant key, value;
             VALUE pair = RARRAY_AREF(pairs, i);
-            key = gdrb_ruby_builtin_to_godot_variant(RARRAY_AREF(pair, 0));
-            value = gdrb_ruby_builtin_to_godot_variant(RARRAY_AREF(pair, 1));
+            key = rb_godot_variant_to_godot(RARRAY_AREF(pair, 0));
+            value = rb_godot_variant_to_godot(RARRAY_AREF(pair, 1));
             api->godot_dictionary_set(addr, &key, &value);
             api->godot_variant_destroy(&key);
             api->godot_variant_destroy(&value);
@@ -22,11 +21,6 @@ module Godot::Generator
         EOF
       end
 
-      def type_checker
-        '::String'
-      end
-
     end
   end
 end
-=end

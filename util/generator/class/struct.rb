@@ -73,7 +73,7 @@ module Godot::Generator
           case #{type_id}: {
             #{type_name} *addr = #{Godot::Generator::Type.get_type("#{type_name} *").to_godot 'self'};
             api->godot_variant_new_#{type_name.gsub('godot_', '')}(&var, addr);
-            return var;
+            break;
           }
         EOF
       end

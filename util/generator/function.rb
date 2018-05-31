@@ -37,9 +37,15 @@ module Godot::Generator
         'godot_char_string',
         'int',
 
-        'godot_array',
         'godot_pool_byte_array',
-        'godot_array *',
+        'godot_pool_color_array *',
+        'godot_pool_vector3_array *',
+        'godot_pool_vector2_array *',
+        'godot_pool_string_array *',
+        'godot_pool_real_array *',
+        'godot_pool_int_array *',
+        'godot_pool_byte_array *',
+        'godot_object *',
         'uint64_t'
       ]
     end

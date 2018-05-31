@@ -8,5 +8,8 @@ end
 def vector
   @aabb
   Godot::Vector2.new(1,2).normalized()
-  String.new("We're waiting for {str}").format({"str": "Godot"})
+  a = Array.new([1, 2])
+  a.append(a: 1)
+  a.append("zxcvzxcv")
+  a
 end

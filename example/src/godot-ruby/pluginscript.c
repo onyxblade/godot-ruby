@@ -91,9 +91,9 @@ godot_pluginscript_script_manifest gdrb_ruby_script_init(godot_pluginscript_lang
 	godot_pluginscript_script_manifest manifest;
 
 	VALUE godot_module = rb_const_get(rb_cModule, rb_intern("Godot"));
-	VALUE r_path = gdrb_godot_string_to_ruby_string(p_path);
+	VALUE r_path = rb_godot_string_pointer_from_godot(p_path);
 
-	VALUE klass = rb_funcall(godot_module, rb_intern("require_script"), 1, r_path);
+	VALUE klass = rb_funcall(godot_module, rb_intern("require_script"), 1, rb_funcall(r_path, rb_intern("to_s"), 0));
 
 	gdrb_pluginscript_script_data *data;
 	data = (gdrb_pluginscript_script_data*)malloc(sizeof(gdrb_pluginscript_script_data));
@@ -103,7 +103,6 @@ godot_pluginscript_script_manifest gdrb_ruby_script_init(godot_pluginscript_lang
 	VALUE klass_name = rb_funcall(klass, rb_intern("name"), 0);
 	godot_string_name name;
 	api->godot_string_name_new_data(&name, StringValueCStr(klass_name));
-
 	godot_string_name base;
 	VALUE base_name_symbol = rb_funcall(klass, rb_intern("base_name"), 0);
 	VALUE base_name = rb_funcall(base_name_symbol, rb_intern("to_s"), 0);
@@ -180,8 +179,8 @@ godot_variant gdrb_ruby_instance_call_method(godot_pluginscript_instance_data *p
 	gdrb_pluginscript_instance_data *data = (gdrb_pluginscript_instance_data*) p_data;
 
 	godot_string method_name = api->godot_string_name_get_name(p_method);
-	VALUE method_name_str = gdrb_godot_string_to_ruby_string(&method_name);
-	VALUE respond_to = rb_funcall(data->object, rb_intern("respond_to?"), 1, method_name_str);
+	VALUE method_name_str = rb_funcall(rb_godot_string_pointer_from_godot(&method_name), rb_intern("to_s"), 0);
+	VALUE respond_to = rb_funcall(data->object, rb_intern("respond_to?"), 1, rb_funcall(method_name_str, rb_intern("to_s"), 0));
 
 	godot_variant var;
 
@@ -195,15 +194,25 @@ godot_variant gdrb_ruby_instance_call_method(godot_pluginscript_instance_data *p
 		VALUE base_name_symbol = rb_funcall(klass, rb_intern("base_name"), 0);
 		VALUE base_name = rb_funcall(base_name_symbol, rb_intern("to_s"), 0);
 
-		godot_method_bind *method = api->godot_method_bind_get_method(StringValueCStr(base_name), StringValueCStr(method_name_str));
+		rb_funcall(rb_cObject, rb_intern("p"), 1, base_name);
 
-		if (method) {
-			var = api->godot_method_bind_call(method, data->owner, p_args, p_argcount, r_error);
-		} else {
-			api->godot_variant_new_nil(&var);
-			printf("called undefined method %s\n", StringValueCStr(method_name_str));
+		godot_method_bind *method;
+		wchar_t *wchars = api->godot_string_wide_str(&method_name);
+		{
+			int len = api->godot_string_length(&method_name);
+			char chars[len+1];
+			wcstombs(chars, wchars, len + 1);
+
+			method = api->godot_method_bind_get_method(StringValueCStr(base_name), chars);
+
+			if (method) {
+				var = api->godot_method_bind_call(method, data->owner, p_args, p_argcount, r_error);
+			} else {
+				api->godot_variant_new_nil(&var);
+				printf("called undefined method %ls\n", wchars);
+			}
+			printf("call error %d\n", r_error->error);
 		}
-		printf("call error %d\n", r_error->error);
 	}
 
 	api->godot_string_destroy(&method_name);
