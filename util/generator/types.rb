@@ -219,7 +219,7 @@ Godot::Generator::Type.register_type(
           }
           default: {
             VALUE godot_module = rb_const_get(rb_cModule, rb_intern("Godot"));
-            VALUE built_in_type_class = rb_const_get(godot_module, rb_intern("BuiltInType"));
+            VALUE built_in_type_class = rb_funcall(godot_module, rb_intern("built_in_type_class"), 0);
 
             if (RTEST(rb_funcall(self, rb_intern("is_a?"), 1, built_in_type_class))) {
               switch (FIX2LONG(rb_funcall(self, rb_intern("_type"), 0))) {

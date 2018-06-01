@@ -21,12 +21,41 @@ module Godot
     p $!.backtrace
     nil
   end
+
+  def self.built_in_type_class
+    @_built_in_type_class ||= Class.new do
+      class << self
+        def _adopt addr
+          obj = allocate
+          obj.instance_variable_set(:@_godot_address, addr)
+          ObjectSpace.define_finalizer(obj, finalizer_proc(addr))
+          obj
+        end
+
+        def finalizer_proc addr
+          proc { self._finalize addr }
+        end
+
+        def name
+          "Godot.built_in_type_class"
+        end
+        alias :inspect :name
+        alias :to_s :name
+      end
+
+    end
+  end
+
+  def self.template_source_code base_name
+    Godot::String.new <<~EOF
+      extends :#{base_name}
+
+      def _ready
+
+      end
+    EOF
+  end
 end
 
-require_relative "godot/built_in_type.rb"
 require_relative "godot/object.rb"
 require_relative "godot/generated/built_in_types.rb"
-
-#Dir.glob("#{__dir__}/godot/**/*.rb").each do |file|
-#  require file
-#end

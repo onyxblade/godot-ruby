@@ -8,3 +8,7 @@ end
 def vector
   @aabb
 end
+
+def multi a, b
+  p a + b
+end

@@ -49,7 +49,7 @@ module Godot::Generator
       def class_definition
         <<~EOF
           module Godot
-            class #{name} < Godot::BuiltInType
+            class #{name} < Godot.built_in_type_class
               #{initialize_method}
             end
           end
