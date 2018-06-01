@@ -21,7 +21,7 @@ module Godot::Generator
         <<~EOF
           case #{variant_type_enum_name}: {
             #{type_name}* val = api->godot_variant_as_#{type_name.gsub('godot_', '')}(&addr);
-            ret = #{Godot::Generator::Type.get_type(type_name).from_godot 'val'};
+            ret = rb_godot_object_pointer_from_godot(val);
             break;
           }
         EOF

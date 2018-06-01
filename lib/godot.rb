@@ -4,14 +4,14 @@ module Godot
 
   def self.require_script raw_path
     path = raw_path.gsub('res:/', ROOT)
-    klass = Class.new(Godot::Object)
-    klass.class_eval(File.open(path, &:read), raw_path)
+    klass = ::Class.new(Godot::Object)
+    klass.class_eval(::File.open(path, &:read), raw_path)
     CLASSES[klass.object_id] = klass
     klass
   rescue
     p $!
     p $!.backtrace
-    Class.new(Godot::Object)
+    ::Class.new(Godot::Object)
   end
 
   def self.call_method obj, name, *args
@@ -23,7 +23,7 @@ module Godot
   end
 
   def self.built_in_type_class
-    @_built_in_type_class ||= Class.new do
+    @_built_in_type_class ||= ::Class.new do
       class << self
         def _adopt addr
           obj = allocate
@@ -36,14 +36,12 @@ module Godot
           proc { self._finalize addr }
         end
 
-        #def name
-        #  "Godot.built_in_type_class"
-        #end
-        #alias :inspect :name
-        #alias :to_s :name
-
         def const_missing name
-          Godot.const_set(name.to_sym, Godot._get_global_singleton(name.to_s))
+          if Engine.has_singleton(name)
+            Godot.const_set(name, Godot._get_global_singleton(name.to_s))
+          else
+            Godot.const_set(name, Godot::Class.new(name))
+          end
         end
       end
 
@@ -72,8 +70,15 @@ module Godot
     singletons.each do |name|
       Godot.const_set(name, Godot._get_global_singleton(name))
     end
+    ['TCPServer', 'File', 'Thread', 'Mutex', 'Range'].each do |name|
+      Godot.const_set(name, Godot::Class.new(name))
+    end
+  rescue
+    p $!
+    p $!.backtrace
   end
 end
 
 require_relative "godot/object.rb"
+require_relative "godot/class.rb"
 require_relative "godot/generated/built_in_types.rb"
