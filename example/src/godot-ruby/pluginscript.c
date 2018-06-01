@@ -39,8 +39,7 @@ void gdrb_add_global_constant(godot_pluginscript_language_data *p_data, const go
 }
 
 VALUE gdrb_object_call(VALUE self, VALUE method_name, VALUE method_args) {
-	VALUE rpointer = rb_iv_get(self, "@_godot_address");
-	godot_object *pointer = (godot_object *)NUM2LONG(rpointer);
+	godot_object *pointer = rb_godot_object_pointer_to_godot(self);
 	godot_variant gv_args = rb_godot_variant_to_godot(method_args);
 	godot_variant gv_name = rb_godot_variant_to_godot(method_name);
 
@@ -51,9 +50,19 @@ VALUE gdrb_object_call(VALUE self, VALUE method_name, VALUE method_args) {
 		&gv_name,
 		&gv_args
 	};
-	api->godot_method_bind_call(method_bind, pointer, c_args, 2, &p_error);
-	printf("call error %d", p_error.error);
-	return Qnil;
+	godot_variant ret =  api->godot_method_bind_call(method_bind, pointer, c_args, 2, &p_error);
+	// printf("call error %d", p_error.error);
+	return rb_godot_variant_from_godot(ret);
+}
+
+VALUE rb_godot_get_global_singleton (VALUE self, VALUE name) {
+	godot_object* klass = api->godot_global_get_singleton(StringValueCStr(name));
+
+	if (klass) {
+		return rb_godot_object_pointer_from_godot(klass);
+	} else {
+		return Qnil;
+	}
 }
 
 godot_pluginscript_language_data *gdrb_ruby_init() {
@@ -69,7 +78,32 @@ godot_pluginscript_language_data *gdrb_ruby_init() {
 
 	VALUE object_module = rb_const_get(rb_mGodot, rb_intern("Object"));
 	rb_define_method(object_module, "_call", &gdrb_object_call, 2);
+
+	rb_define_singleton_method(rb_mGodot, "_get_global_singleton", &rb_godot_get_global_singleton, 1);
+
 	init();
+
+	godot_variant class_list;
+	{
+		godot_object* class_db = api->godot_global_get_singleton("ClassDB");
+		godot_method_bind *method = api->godot_method_bind_get_method("Object", "call");
+		godot_string method_name;
+		api->godot_string_new(&method_name);
+		api->godot_string_parse_utf8(&method_name, "get_class_list");
+
+		godot_variant method_name_variant;
+		api->godot_variant_new_string(&method_name_variant, &method_name);
+
+		const godot_variant *arguments[] = {
+			&method_name_variant
+		};
+		godot_variant_call_error call_error;
+		class_list = api->godot_method_bind_call(method, class_db, arguments, 1, &call_error);
+		// rb_funcall(rb_mGodot, rb_intern("_define_constants"), 1, rb_godot_variant_from_godot(class_list));
+	}
+
+	rb_funcall(rb_mGodot, rb_intern("initialize_singletons"), 0);
+
 	return NULL;
 }
 void gdrb_ruby_finish(godot_pluginscript_language_data *p_data) {

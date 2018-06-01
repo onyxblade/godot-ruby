@@ -36,11 +36,15 @@ module Godot
           proc { self._finalize addr }
         end
 
-        def name
-          "Godot.built_in_type_class"
+        #def name
+        #  "Godot.built_in_type_class"
+        #end
+        #alias :inspect :name
+        #alias :to_s :name
+
+        def const_missing name
+          Godot.const_set(name.to_sym, Godot._get_global_singleton(name.to_s))
         end
-        alias :inspect :name
-        alias :to_s :name
       end
 
     end
@@ -54,6 +58,20 @@ module Godot
 
       end
     EOF
+  end
+
+  def self._define_constants pool_string_array
+    pool_string_array.size.times do |i|
+      name = pool_string_array.get(i).to_s
+      Godot.const_set(name, Godot._get_global_singleton(name))
+    end
+  end
+
+  def self.initialize_singletons
+    singletons = ["ResourceLoader", "ResourceSaver", "OS", "Geometry", "ClassDB", "Engine", "AudioServer", "ProjectSettings", "Input", "InputMap", "Marshalls", "Performance", "Physics2DServer", "PhysicsServer", "TranslationServer", "VisualServer"]
+    singletons.each do |name|
+      Godot.const_set(name, Godot._get_global_singleton(name))
+    end
   end
 end
 

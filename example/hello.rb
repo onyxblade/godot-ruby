@@ -7,6 +7,7 @@ end
 
 def vector
   @aabb
+  ClassDB.get_class_list
 end
 
 def multi a, b

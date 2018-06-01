@@ -1,5 +1,5 @@
 module Godot
-  class Class
+  class Class < Object
 
   end
 end

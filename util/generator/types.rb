@@ -142,6 +142,26 @@ Godot::Generator::Type.register_type(
 )
 
 Godot::Generator::Type.register_type(
+  'godot_object *',
+  method: :heap_pointer,
+  target_class: 'Object',
+  source_class: []
+)
+
+Godot::Generator::Type.register_type(
+  'godot_error',
+  method: :alias,
+  alias: 'godot_int'
+)
+
+Godot::Generator::Type.register_type(
+  'godot_pool_string_array *',
+  method: :heap_pointer,
+  target_class: 'PoolStringArray',
+  source_class: []
+)
+
+Godot::Generator::Type.register_type(
   'godot_variant',
   from_godot_function: ->{
     <<~EOF
