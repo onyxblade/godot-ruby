@@ -7,18 +7,5 @@ module Godot
         _call name, args
       end
     end
-
-    class << self
-      alias :name :to_s
-
-      def extends name
-        @base_name = name
-      end
-
-      def base_name
-        @base_name || 'Object'
-      end
-    end
-
   end
 end

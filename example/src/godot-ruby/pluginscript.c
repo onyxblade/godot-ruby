@@ -4,10 +4,47 @@ const godot_gdnative_ext_pluginscript_api_struct *pluginscript_api = NULL;
 
 static const char *GDRB_RUBY_RECOGNIZED_EXTENSIONS[] = { "rb", 0 };
 static const char *GDRB_RUBY_RESERVED_WORDS[] = {
-	"class"
+	"__ENCODING__",
+	"__LINE__",
+	"__FILE__",
+	"BEGIN",
+	"END",
+	"alias",
+	"and",
+	"begin",
+	"break",
+	"case",
+	"class",
 	"def",
-	"end",
+	"defined?",
 	"do",
+	"else",
+	"elsif",
+	"end",
+	"ensure",
+	"false",
+	"for",
+	"if",
+	"in",
+	"module",
+	"next",
+	"nil",
+	"not",
+	"or",
+	"redo",
+	"rescue",
+	"retry",
+	"return",
+	"self",
+	"super",
+	"then",
+	"true",
+	"undef",
+	"unless",
+	"until",
+	"when",
+	"while",
+	"yield",
 	0
 };
 static const char *GDRB_RUBY_COMMENT_DELIMITERS[] = { "#", 0 };
@@ -18,7 +55,6 @@ static VALUE rb_mGodot;
 
 typedef struct {
 	VALUE klass;
-	VALUE links;
 } gdrb_pluginscript_script_data;
 
 typedef struct {
@@ -28,7 +64,7 @@ typedef struct {
 
 godot_string gdrb_get_template_source_code(godot_pluginscript_language_data *p_data, const godot_string *p_class_name, const godot_string *p_base_class_name) {
 	// p_class_name is the filename
-	VALUE template = rb_funcall(rb_mGodot, rb_intern("template_source_code"), 1, rb_godot_string_pointer_from_godot(p_base_class_name));
+	VALUE template = rb_funcall(rb_mGodot, rb_intern("_template_source_code"), 1, rb_godot_string_pointer_from_godot(p_base_class_name));
 	godot_string ret;
 	api->godot_string_new_copy(&ret, rb_godot_string_pointer_to_godot(template));
 	printf("get_template_source_code\n");
@@ -38,7 +74,7 @@ void gdrb_add_global_constant(godot_pluginscript_language_data *p_data, const go
 	printf("add_global_constant\n");
 }
 
-VALUE gdrb_object_call(VALUE self, VALUE method_name, VALUE method_args) {
+VALUE rb_godot_object_call(VALUE self, VALUE method_name, VALUE method_args) {
 	godot_object *pointer = rb_godot_object_pointer_to_godot(self);
 	godot_variant gv_args = rb_godot_variant_to_godot(method_args);
 	godot_variant gv_name = rb_godot_variant_to_godot(method_name);
@@ -65,6 +101,18 @@ VALUE rb_godot_get_global_singleton (VALUE self, VALUE name) {
 	}
 }
 
+VALUE rb_godot_print (VALUE self, VALUE string) {
+	api->godot_print(rb_godot_string_pointer_to_godot(string));
+	return Qtrue;
+}
+
+VALUE rb_godot_print_error (VALUE self, VALUE exception) {
+	VALUE message = rb_funcall(exception, rb_intern("message"), 0);
+	VALUE backtrace = rb_funcall(rb_funcall(exception, rb_intern("backtrace"), 0), rb_intern("to_s"), 0);
+	api->godot_print_error(StringValueCStr(message), StringValueCStr(backtrace), "ruby", 0);
+	return Qtrue;
+}
+
 godot_pluginscript_language_data *gdrb_ruby_init() {
 	printf("gdrb_ruby_init\n");
 	ruby_init();
@@ -74,35 +122,16 @@ godot_pluginscript_language_data *gdrb_ruby_init() {
 	rb_funcall(load_path, rb_intern("unshift"), 1, rb_str_new_cstr("/home/cichol/godot-ruby/lib"));
 	rb_require("godot");
 	rb_mGodot = rb_const_get(rb_cModule, rb_intern("Godot"));
-	rb_define_const(rb_mGodot, "ROOT", rb_str_new_cstr("/home/cichol/godot-ruby/example"));
 
 	VALUE object_module = rb_const_get(rb_mGodot, rb_intern("Object"));
-	rb_define_method(object_module, "_call", &gdrb_object_call, 2);
+	rb_define_method(object_module, "_call", &rb_godot_object_call, 2);
 
-	rb_define_singleton_method(rb_mGodot, "_get_global_singleton", &rb_godot_get_global_singleton, 1);
-
+	rb_define_singleton_method(rb_mGodot, "_get_singleton", &rb_godot_get_global_singleton, 1);
+	rb_define_singleton_method(rb_mGodot, "_print", &rb_godot_print, 1);
+	rb_define_singleton_method(rb_mGodot, "_print_error", &rb_godot_print_error, 1);
 	init();
 
-	godot_variant class_list;
-	{
-		godot_object* class_db = api->godot_global_get_singleton("ClassDB");
-		godot_method_bind *method = api->godot_method_bind_get_method("Object", "call");
-		godot_string method_name;
-		api->godot_string_new(&method_name);
-		api->godot_string_parse_utf8(&method_name, "get_class_list");
-
-		godot_variant method_name_variant;
-		api->godot_variant_new_string(&method_name_variant, &method_name);
-
-		const godot_variant *arguments[] = {
-			&method_name_variant
-		};
-		godot_variant_call_error call_error;
-		class_list = api->godot_method_bind_call(method, class_db, arguments, 1, &call_error);
-		// rb_funcall(rb_mGodot, rb_intern("_define_constants"), 1, rb_godot_variant_from_godot(class_list));
-	}
-
-	rb_funcall(rb_mGodot, rb_intern("initialize_singletons"), 0);
+	rb_funcall(rb_mGodot, rb_intern("_initialize"), 0);
 
 	return NULL;
 }
@@ -115,20 +144,18 @@ godot_pluginscript_script_manifest gdrb_ruby_script_init(godot_pluginscript_lang
 	godot_pluginscript_script_manifest manifest;
 
 	VALUE r_path = rb_godot_string_pointer_from_godot(p_path);
+	VALUE r_source = rb_godot_string_pointer_from_godot(p_source);
 
-	VALUE klass = rb_funcall(rb_mGodot, rb_intern("require_script"), 1, rb_funcall(r_path, rb_intern("to_s"), 0));
+	VALUE klass = rb_funcall(rb_mGodot, rb_intern("_register_class"), 2, rb_funcall(r_path, rb_intern("to_s"), 0), rb_funcall(r_source, rb_intern("to_s"), 0));
 
 	gdrb_pluginscript_script_data *data;
 	data = (gdrb_pluginscript_script_data*)api->godot_alloc(sizeof(gdrb_pluginscript_script_data));
 	data->klass = klass;
 
-	data->links = rb_const_get(rb_mGodot, rb_intern("LINKS"));
-	VALUE klass_name = rb_funcall(klass, rb_intern("name"), 0);
 	godot_string_name name;
-	api->godot_string_name_new_data(&name, StringValueCStr(klass_name));
+	api->godot_string_name_new_data(&name, "anonymous");
 	godot_string_name base;
-	VALUE base_name_symbol = rb_funcall(klass, rb_intern("base_name"), 0);
-	VALUE base_name = rb_funcall(base_name_symbol, rb_intern("to_s"), 0);
+	VALUE base_name = rb_funcall(klass, rb_intern("_base_name"), 0);
 	api->godot_string_name_new_data(&base, StringValueCStr(base_name));
 
 	godot_dictionary member_lines;
@@ -145,8 +172,12 @@ godot_pluginscript_script_manifest gdrb_ruby_script_init(godot_pluginscript_lang
 	godot_array signals;
 	api->godot_array_new(&signals);
 
+	VALUE property_hash = rb_eval_string("{name: 'text_a', type: 2, usage: 8199}");
+	godot_variant property_dict = rb_godot_variant_to_godot(property_hash);
 	godot_array properties;
 	api->godot_array_new(&properties);
+	api->godot_array_append(&properties, &property_dict);
+	api->godot_variant_destroy(&property_dict);
 
 	manifest.data = (godot_pluginscript_script_data*) data;
 	manifest.name = name;
@@ -162,6 +193,7 @@ godot_pluginscript_script_manifest gdrb_ruby_script_init(godot_pluginscript_lang
 }
 void gdrb_ruby_script_finish(godot_pluginscript_script_data *p_data) {
 	gdrb_pluginscript_script_data *data = (gdrb_pluginscript_script_data*) p_data;
+	rb_funcall(rb_mGodot, rb_intern("_unregister_class"), 1, data->klass);
 	api->godot_free(p_data);
 	printf("script_finish\n");
 }
@@ -172,8 +204,7 @@ godot_pluginscript_instance_data *gdrb_ruby_instance_init(godot_pluginscript_scr
 	data = (gdrb_pluginscript_instance_data*)api->godot_alloc(sizeof(gdrb_pluginscript_instance_data));
 
 	VALUE instance = rb_funcall(script_data->klass, rb_intern("new"), 0);
-	VALUE object_id = rb_funcall(instance, rb_intern("object_id"), 0);
-	rb_funcall(script_data->links, rb_intern("[]="), 2, object_id, instance);
+
 	data->object = instance;
 	data->owner = p_owner;
 	rb_iv_set(instance, "@_godot_address", LONG2NUM((long)p_owner));
@@ -183,6 +214,8 @@ godot_pluginscript_instance_data *gdrb_ruby_instance_init(godot_pluginscript_scr
 }
 
 void gdrb_ruby_instance_finish(godot_pluginscript_instance_data *p_data) {
+	gdrb_pluginscript_instance_data *data = (gdrb_pluginscript_instance_data *) p_data;
+	rb_funcall(rb_mGodot, rb_intern("_unregister_object"), 1, data->object);
 	api->godot_free(p_data);
 	printf("instance_finish\n");
 }
@@ -190,10 +223,15 @@ void gdrb_ruby_instance_finish(godot_pluginscript_instance_data *p_data) {
 godot_bool gdrb_ruby_instance_set_prop(godot_pluginscript_instance_data *p_data, const godot_string *p_name, const godot_variant *p_value) {
 	gdrb_pluginscript_instance_data *data = (gdrb_pluginscript_instance_data*) p_data;
 	printf("instance_set_prop\n");
+	print_godot_string(p_name);
+	return 0;
 }
 godot_bool gdrb_ruby_instance_get_prop(godot_pluginscript_instance_data *p_data, const godot_string *p_name, godot_variant *r_ret) {
 	gdrb_pluginscript_instance_data *data = (gdrb_pluginscript_instance_data*) p_data;
 	printf("instance_get_prop\n");
+	api->godot_variant_new_string(r_ret, p_name);
+	print_godot_string(p_name);
+	return 1;
 }
 
 godot_variant gdrb_ruby_instance_call_method(godot_pluginscript_instance_data *p_data, const godot_string_name *p_method, const godot_variant **p_args, int p_argcount, godot_variant_call_error *r_error) {
@@ -220,8 +258,7 @@ godot_variant gdrb_ruby_instance_call_method(godot_pluginscript_instance_data *p
 		var = rb_godot_variant_to_godot(ret);
 	} else {
 		VALUE klass = rb_funcall(data->object, rb_intern("class"), 0);
-		VALUE base_name_symbol = rb_funcall(klass, rb_intern("base_name"), 0);
-		VALUE base_name = rb_funcall(base_name_symbol, rb_intern("to_s"), 0);
+		VALUE base_name = rb_funcall(klass, rb_intern("_base_name"), 0);
 
 		godot_method_bind *method;
 		wchar_t *wchars = api->godot_string_wide_str(&method_name);

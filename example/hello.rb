@@ -5,10 +5,12 @@ def _ready
   @string = Godot::String.new("00000")
 end
 
-def vector node
+def vector
   #@aabb
   #ClassDB.instance(String.new("Node"))
-  p node
+  #p node
+  p __FILE__
+  p $0
 end
 
 def multi a, b
