@@ -223,15 +223,29 @@ void gdrb_ruby_instance_finish(godot_pluginscript_instance_data *p_data) {
 godot_bool gdrb_ruby_instance_set_prop(godot_pluginscript_instance_data *p_data, const godot_string *p_name, const godot_variant *p_value) {
 	gdrb_pluginscript_instance_data *data = (gdrb_pluginscript_instance_data*) p_data;
 	printf("instance_set_prop\n");
-	print_godot_string(p_name);
-	return 0;
+	VALUE method_name = rb_funcall(rb_funcall(rb_godot_string_pointer_from_godot(p_name), rb_intern("to_s"), 0), rb_intern("concat"), 1, rb_str_new_cstr("="));
+
+	if (RTEST(rb_funcall(data->object, rb_intern("respond_to?"), 1, method_name))) {
+		rb_funcall(data->object, rb_intern_str(method_name), 1, rb_godot_variant_from_godot(*p_value));
+		return 1;
+	} else {
+		return 0;
+	}
 }
 godot_bool gdrb_ruby_instance_get_prop(godot_pluginscript_instance_data *p_data, const godot_string *p_name, godot_variant *r_ret) {
 	gdrb_pluginscript_instance_data *data = (gdrb_pluginscript_instance_data*) p_data;
 	printf("instance_get_prop\n");
-	api->godot_variant_new_string(r_ret, p_name);
-	print_godot_string(p_name);
-	return 1;
+	VALUE method_name = rb_funcall(rb_godot_string_pointer_from_godot(p_name), rb_intern("to_s"), 0);
+
+	if (RTEST(rb_funcall(data->object, rb_intern("respond_to?"), 1, method_name))) {
+		godot_variant var;
+		VALUE ret = rb_funcall(data->object, rb_intern_str(method_name), 0);
+		var = rb_godot_variant_to_godot(ret);
+		memcpy(r_ret, &var, sizeof(godot_variant));
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 godot_variant gdrb_ruby_instance_call_method(godot_pluginscript_instance_data *p_data, const godot_string_name *p_method, const godot_variant **p_args, int p_argcount, godot_variant_call_error *r_error) {
@@ -273,9 +287,8 @@ godot_variant gdrb_ruby_instance_call_method(godot_pluginscript_instance_data *p
 				var = api->godot_method_bind_call(method, data->owner, p_args, p_argcount, r_error);
 			} else {
 				api->godot_variant_new_nil(&var);
-				printf("called undefined method %ls\n", wchars);
+				r_error->error = GODOT_CALL_ERROR_CALL_ERROR_INVALID_METHOD;
 			}
-			printf("call error %d\n", r_error->error);
 		}
 	}
 

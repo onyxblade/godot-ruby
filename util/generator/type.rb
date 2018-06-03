@@ -7,7 +7,8 @@ module Godot::Generator
         @types ||= {}
         case options[:method]
         when :alias
-          type = Godot::Generator::Type.get_type(options[:alias])
+          options[:alias_type] = Godot::Generator::Type.get_type(options[:alias])
+          type = Godot::Generator::Type::Alias.new(signature, options)
         when :stack
           type = Godot::Generator::Type::Stack.new(signature, options)
         when :stack_pointer
@@ -53,6 +54,15 @@ module Godot::Generator
           [
             t.respond_to?(:from_godot_function) && t.from_godot_function,
             t.respond_to?(:to_godot_function) && t.to_godot_function
+          ]
+        end.flatten.select(&:itself)
+      end
+
+      def generate_godot_convert_function_headers
+        @types.values.map do |t|
+          [
+            t.from_godot_function_header,
+            t.to_godot_function_header
           ]
         end.flatten.select(&:itself)
       end
