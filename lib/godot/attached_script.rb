@@ -12,13 +12,13 @@ module Godot
         @_exports << {name: name, as: as}
       end
 
-      def signal name
+      def signal name, args = []
+        raise "signal arguments should be an array" if !args.is_a?(::Array)
         @_signals ||= []
-        @_signals << name
-      end
-
-      def _base_name
-        @_base_name || 'Object'
+        @_signals << {
+          name: name,
+          args: args
+        }
       end
 
       def tool

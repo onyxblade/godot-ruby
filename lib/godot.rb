@@ -106,4 +106,57 @@ module Godot
   def self._unregister_object obj
     @_objects.delete(obj.object_id)
   end
+
+  def self._script_manifest klass
+    klass.instance_eval do
+      [
+        #name:
+        String.new('anonymous'),
+        #tool:
+        @_tool ? 1 : 0,
+        #base:
+        String.new(@_base_name || 'Object'),
+        #member_lines:
+        Dictionary.new({}),
+        #methods:
+        Array.new(instance_methods(false).map{|m|
+          {
+            name: m,
+            args: [],
+            default_args: [],
+            return: {},
+            flags: 1,
+            rpc_mode: 0
+          }
+        }),
+        #signals:
+        Array.new(@_signals.to_a.map{|s|
+          {
+            name: s[:name],
+            args: s[:args].map{|arg|
+              {
+                name: arg
+              }
+            },
+            default_args: [],
+            return: {},
+            flags: 1,
+            rpc_mode: 0
+          }
+        }),
+        #properties:
+        Array.new(@_exports.to_a.map{|p|
+          {
+            name: p[:name],
+            type: 2,
+            hint: 0,
+            hint_string: nil,
+            usage: 8199,
+            default_value: nil,
+            rset_mode: 0
+          }
+        })
+      ]
+    end
+  end
 end
