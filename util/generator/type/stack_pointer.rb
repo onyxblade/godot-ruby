@@ -21,8 +21,12 @@ module Godot::Generator
         EOF
       end
 
-      def type_checker
+      def source_classes
         super + ["Godot::#{target_class_name}"]
+      end
+
+      def spawn_type
+        Godot::Generator::Type::Stack.new(signature.gsub(' *', ''))
       end
 
     end

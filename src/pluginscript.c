@@ -252,7 +252,6 @@ godot_variant godot_ruby_instance_call_method(godot_pluginscript_instance_data *
 	godot_string method_name = api->godot_string_name_get_name(p_method);
 	VALUE method_name_str = rb_funcall(rb_godot_string_pointer_from_godot(&method_name), rb_intern("to_s"), 0);
 	VALUE respond_to = rb_funcall(data->object, rb_intern("respond_to?"), 1, rb_funcall(method_name_str, rb_intern("to_s"), 0));
-
 	godot_variant var;
 
 	if (RTEST(respond_to)) {
@@ -269,7 +268,7 @@ godot_variant godot_ruby_instance_call_method(godot_pluginscript_instance_data *
 		var = rb_godot_variant_to_godot(ret);
 	} else {
 		VALUE klass = rb_funcall(data->object, rb_intern("class"), 0);
-		VALUE base_name = rb_funcall(klass, rb_intern("_base_name"), 0);
+		VALUE base_name = rb_iv_get(klass, "@_base_name");
 
 		godot_method_bind *method;
 		wchar_t *wchars = api->godot_string_wide_str(&method_name);

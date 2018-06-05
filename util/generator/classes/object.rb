@@ -1,5 +1,5 @@
 module Godot::Generator
-  module Classes
+  module Class
     class Object < Godot::Generator::Class::Heap
       def initializer_function
       end

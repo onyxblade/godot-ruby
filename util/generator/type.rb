@@ -3,43 +3,15 @@ module Godot::Generator
     class << self
       attr_reader :types
 
-      def register_type signature, **options
+      def register_type type
         @types ||= {}
-        case options[:method]
-        when :alias
-          options[:alias_type] = Godot::Generator::Type.get_type(options[:alias])
-          type = Godot::Generator::Type::Alias.new(signature, options)
-        when :stack
-          type = Godot::Generator::Type::Stack.new(signature, options)
-        when :stack_pointer
-          type = Godot::Generator::Type::StackPointer.new(signature, options)
-          s = signature.gsub(' *', '')
-          Godot::Generator::Type.register_type(
-            s,
-            from_godot: -> name {
-              "rb_#{type.name}_from_godot(&#{name})"
-            }
-          )
-        when :heap
-          type = Godot::Generator::Type::Heap.new(signature, options)
-        when :heap_pointer
-          type = Godot::Generator::Type::HeapPointer.new(signature, options)
-          s = signature.gsub(' *', '')
-          Godot::Generator::Type.register_type(
-            s,
-            from_godot: -> name {
-              "rb_#{type.name}_from_godot(&#{name})"
-            },
-            to_godot: -> name {
-              "*rb_#{type.name}_to_godot(#{name})"
-            }
-          )
-        when :simple_with_function
-          type = Godot::Generator::Type::SimpleWithFunction.new(signature, options)
-        else
-          type = Godot::Generator::Type::Base.new(signature, options)
+        if type.respond_to?(:spawn_type)
+          sibling_type = type.spawn_type
+          if sibling_type
+            @types[sibling_type.signature] = sibling_type
+          end
         end
-        @types[signature] = type
+        @types[type.signature] = type
       end
 
       def get_type signature

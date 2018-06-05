@@ -9,10 +9,6 @@ module Godot::Generator
         "godot_#{name.downcase}"
       end
 
-      def self.instance
-        @instance ||= new
-      end
-
       def type_id
         self.class.const_get(:ID)
       end

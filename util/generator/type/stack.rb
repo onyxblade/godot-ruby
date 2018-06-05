@@ -1,18 +1,17 @@
 module Godot::Generator
   module Type
-    class Stack < Struct
-      def from_godot_function
-        <<~EOF
-          VALUE rb_#{type_name}_from_godot (#{signature} addr) {
-            return rb_#{type_name}_pointer_from_godot(&addr);
-          }
-        EOF
+    class Stack < Base
+      def initialize signature
+        @signature = signature
       end
 
-      def type_checker
-        super + ["Godot::#{target_class_name}"]
+      def from_godot_body name
+        "rb_#{self.name}_pointer_from_godot(&#{name})"
       end
 
+      def to_godot_body name
+        "*rb_#{self.name}_pointer_to_godot(#{name})"
+      end
     end
   end
 end

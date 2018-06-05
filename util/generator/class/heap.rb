@@ -22,7 +22,7 @@ module Godot::Generator
       end
 
       def initialize_method
-        statement = constructor.arguments.first.type.type_checker.map{|klass| "arg.is_a?(#{klass})"}.join(" || ")
+        statement = constructor.arguments.first.type.source_classes.map{|klass| "arg.is_a?(#{klass})"}.join(" || ")
         <<~EOF
           def initialize arg
             if #{statement}

@@ -1,5 +1,5 @@
 module Godot::Generator
-  module Classes
+  module Class
     class String < Godot::Generator::Class::Heap
 
       def initializer_function
@@ -17,7 +17,7 @@ module Godot::Generator
         EOF
       end
 
-      def type_checker
+      def source_classes
         '::String'
       end
 

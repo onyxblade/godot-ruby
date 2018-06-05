@@ -2,16 +2,17 @@
 module Godot::Generator
   module Class
     class << self
+      attr_reader :classes
+
+      def register_class klass
+        @classes ||= {}
+        @classes[klass.name.to_s] = klass
+      end
+
       def get_class name
         klass = classes[name.to_s]
         raise "unknown class #{name}" unless klass
         klass
-      end
-
-      def classes
-        @classes ||= Godot::Generator::Classes.constants.map{|c| Godot::Generator::Classes.const_get(c).instance}.map do |i|
-          [i.name.to_s, i]
-        end.to_h
       end
 
       def generate_class_static_definitions

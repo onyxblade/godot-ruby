@@ -1,6 +1,12 @@
 module Godot::Generator
   module Class
     class Stack < Struct
+      attr_reader :name
+
+      def initialize name
+        @name = name
+      end
+
       def initializer_functions
         constructors.map do |func|
           params = func.arguments_without_self.map{|arg| "VALUE #{arg.name}"}.join(', ')
@@ -29,7 +35,7 @@ module Godot::Generator
       def initialize_method
         branches = constructors.map do |func|
           when_statement = func.arguments_without_self.map.with_index do |arg, index|
-            statement = arg.type.type_checker.map{|klass| "args[#{index}].is_a?(#{klass})"}.join(" || ")
+            statement = arg.type.source_classes.map{|klass| "args[#{index}].is_a?(#{klass})"}.join(" || ")
             "(#{statement})"
           end.join(' && ')
           "when #{when_statement} then #{func.name.gsub("#{type_name}_new", "_initialize")}(*args)"

@@ -1,5 +1,5 @@
 module Godot::Generator
-  module Classes
+  module Class
     class NodePath < Godot::Generator::Class::Heap
 
       def type_name
@@ -25,7 +25,7 @@ module Godot::Generator
         EOF
       end
 
-      def type_checker
+      def source_classes
         '::String'
       end
     end
