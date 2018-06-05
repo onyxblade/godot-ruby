@@ -16,7 +16,7 @@ config/icon="res://icon.png"
 
 [gdnative]
 
-singletons=[ "res://bin/ruby.gdnlib" ]
+singletons=[ "res://bin/godot-ruby.gdnlib" ]
 
 [rendering]
 

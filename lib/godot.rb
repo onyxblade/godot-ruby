@@ -107,8 +107,3 @@ module Godot
     @_objects.delete(obj.object_id)
   end
 end
-
-require_relative "godot/object.rb"
-require_relative "godot/class.rb"
-require_relative "godot/attached_script"
-require_relative "godot/generated/built_in_types.rb"

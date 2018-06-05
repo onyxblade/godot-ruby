@@ -118,9 +118,11 @@ godot_pluginscript_language_data *gdrb_ruby_init() {
 	ruby_init();
 	ruby_script("godot");
 	ruby_init_loadpath();
-	VALUE load_path = rb_gv_get("$LOAD_PATH");
-	rb_funcall(load_path, rb_intern("unshift"), 1, rb_str_new_cstr("/home/cichol/godot-ruby/lib"));
-	rb_require("godot");
+	// VALUE load_path = rb_gv_get("$LOAD_PATH");
+	// rb_funcall(load_path, rb_intern("unshift"), 1, rb_str_new_cstr("/home/cichol/godot-ruby/lib"));
+
+	rb_eval_string(RUBY_CODE);
+
 	rb_mGodot = rb_const_get(rb_cModule, rb_intern("Godot"));
 
 	VALUE object_module = rb_const_get(rb_mGodot, rb_intern("Object"));

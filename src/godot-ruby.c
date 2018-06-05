@@ -1,0 +1,9 @@
+#include <gdnative_api_struct.gen.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ruby.h>
+#include "debug.h"
+#include "generated.c"
+#include "pluginscript.c"
+#include "debug.c"

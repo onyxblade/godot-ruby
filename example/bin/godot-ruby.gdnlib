@@ -6,9 +6,9 @@ symbol_prefix="godot_"
 
 [entry]
 
-X11.64="res://bin/ruby.so"
-Windows.64="res://bin/ruby.dll"
-OSX.64="res://bin/ruby.dylib"
+X11.64="res://bin/godot-ruby.so"
+Windows.64="res://bin/godot-ruby.dll"
+OSX.64="res://bin/godot-ruby.dylib"
 
 [dependencies]
 

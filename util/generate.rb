@@ -35,4 +35,3 @@ require_relative 'generator/types'
 #puts Godot::Generator::Class.get_class(:NodePath).variant_branch
 
 Godot::Generator.generate_c_functions
-Godot::Generator.generate_ruby_classes
