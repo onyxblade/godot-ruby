@@ -1,5 +1,8 @@
 extends :Object
 
+export :node, :NodePath
+export :vector, :Vector2, default: Vector2.new(2, 3)
+
 signal :click, [:a, :b]
 
 def _ready
@@ -8,10 +11,8 @@ def _ready
 end
 
 def vector
-  #@aabb
-  #ClassDB.instance(String.new("Node"))
-  #p node
-  nil
+  p self.class.instance_variable_get(:@_exports)
+  get_property_list
 end
 
 def multi a, b

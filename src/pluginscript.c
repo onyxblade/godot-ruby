@@ -131,7 +131,11 @@ godot_pluginscript_language_data *godot_ruby_init() {
 	rb_define_singleton_method(rb_mGodot, "_get_singleton", &rb_godot_get_global_singleton, 1);
 	rb_define_singleton_method(rb_mGodot, "_print", &rb_godot_print, 1);
 	rb_define_singleton_method(rb_mGodot, "_print_error", &rb_godot_print_error, 1);
+
 	init();
+
+	godot_dictionary constant_dict = api->godot_get_global_constants();
+	rb_iv_set(rb_mGodot, "@_godot_constants", rb_godot_dictionary_from_godot(constant_dict));
 
 	rb_funcall(rb_mGodot, rb_intern("_initialize"), 0);
 
@@ -185,6 +189,7 @@ godot_pluginscript_script_manifest godot_ruby_script_init(godot_pluginscript_lan
 	manifest.signals = signals;
 	manifest.properties = properties;
 
+	*r_error = GODOT_OK;
 	printf("ruby_script_init\n");
 	return manifest;
 }

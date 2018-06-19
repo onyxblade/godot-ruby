@@ -91,9 +91,19 @@ module Godot
     $stdout.reopen(godot_io)
   end
 
+  def self._initialize_constants
+    @_godot_constants = @_godot_constants.to_h.map do |name, int|
+      [name.to_s, int]
+    end.to_h
+    @_godot_constants.each do |name, int|
+      Godot.const_set(name, int)
+    end
+  end
+
   def self._initialize
     _initialize_singletons
     _initialize_io
+    _initialize_constants
   rescue Exception => e
     Godot._print_error e
   end
@@ -148,11 +158,11 @@ module Godot
         Array.new(@_exports.to_a.map{|p|
           {
             name: p[:name],
-            type: 2,
-            hint: 0,
-            hint_string: nil,
+            type: p[:type],
+            hint: p[:hint],
+            hint_string: p[:hint_string],
             usage: 8199,
-            default_value: nil,
+            default_value: p[:default_value],
             rset_mode: 0
           }
         })
