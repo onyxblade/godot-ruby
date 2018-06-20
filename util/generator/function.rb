@@ -94,6 +94,10 @@ module Godot::Generator
     def valid?
       (constructor? || method?) && check_types && check_ignore_function
     end
+
+    def ruby_method_name
+      name.gsub("#{@klass.type_name}_new", "_initialize").gsub("#{@klass.type_name}_", '')
+    end
   end
 
 end

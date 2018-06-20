@@ -90,6 +90,68 @@ module Godot::Generator
         EOF
       end
 
+      def register_operator_statements
+        instance_methods.select{|x| x.name.match(/operator_/)}.map do |x|
+          opr_name = x.name.match(/operator_(.+)/)[1]
+          case opr_name
+          when 'add'
+            opr = :+
+          when 'equal'
+            opr = :==
+          when 'subtract'
+            opr = :-
+          when 'multiply_vector', 'multiply_scalar', 'divide_vector', 'divide_scalar'
+            next
+          when 'less'
+            opr = :<
+          when 'neg'
+            opr = :-@
+          when 'multiply'
+            opr = :*
+          when 'divide'
+            opr = :/
+          when 'index'
+            opr = :[]
+          when 'index_const'
+            next
+          when 'plus'
+            opr = :+
+          else
+            raise opr_name
+          end
+          "rb_define_alias(#{name}_class, \"#{opr}\", \"operator_#{opr_name}\");"
+        end.compact.join("\n")
+      end
+
+      def operator_methods
+        [[:multiply, :*], [:divide, :/]].map do |opr_name, opr|
+          functions = instance_methods.select{|x| x.name.match /operator_#{opr_name}/}
+          if functions.size > 1
+            dispatcher_method opr, functions
+          end
+        end.compact.join("\n")
+      end
+
+      def dispatcher_method name, functions, body = nil
+        branches = functions.map do |func|
+          when_statement = func.arguments_without_self.map.with_index do |arg, index|
+            statement = arg.type.source_classes.map{|klass| "args[#{index}].is_a?(#{klass})"}.join(" || ")
+            "(#{statement})"
+          end.join(' && ')
+          "when #{when_statement} then #{func.ruby_method_name}(*args)"
+        end.join("\n")
+        <<~EOF
+          def #{name} *args
+            case
+            #{branches}
+            else
+              raise "mismatched arguments"
+            end
+            #{body}
+          end
+        EOF
+      end
+
     end
   end
 end

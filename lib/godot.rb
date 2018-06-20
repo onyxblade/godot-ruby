@@ -45,6 +45,10 @@ module Godot
             Godot.const_set(name, Godot::Class.new(name))
           end
         end
+
+        def [] *args
+          new *args
+        end
       end
 
     end

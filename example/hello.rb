@@ -11,8 +11,7 @@ def _ready
 end
 
 def vector
-  p self.class.instance_variable_get(:@_exports)
-  get_property_list
+  -Vector2[2, 3]
 end
 
 def multi a, b

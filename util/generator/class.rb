@@ -52,8 +52,11 @@ module Godot::Generator
 
       def generate_class_register_method_statements
         classes.values.map do |c|
-          c.register_method_statements
-        end
+          [
+            c.register_method_statements,
+            c.register_operator_statements
+          ]
+        end.flatten
       end
 
       def generate_class_ruby_definitions

@@ -33,22 +33,8 @@ module Godot::Generator
       end
 
       def initialize_method
-        branches = constructors.map do |func|
-          when_statement = func.arguments_without_self.map.with_index do |arg, index|
-            statement = arg.type.source_classes.map{|klass| "args[#{index}].is_a?(#{klass})"}.join(" || ")
-            "(#{statement})"
-          end.join(' && ')
-          "when #{when_statement} then #{func.name.gsub("#{type_name}_new", "_initialize")}(*args)"
-        end.join("\n")
-        <<~EOF
-          def initialize *args
-            case
-            #{branches}
-            else
-              raise "mismatched arguments"
-            end
-            ObjectSpace.define_finalizer(self, self.class.finalizer_proc(@_godot_address))
-          end
+        dispatcher_method :initialize, constructors, <<~EOF
+          ObjectSpace.define_finalizer(self, self.class.finalizer_proc(@_godot_address))
         EOF
       end
 
@@ -57,6 +43,7 @@ module Godot::Generator
           module Godot
             class #{name} < Godot.built_in_type_class
               #{initialize_method}
+              #{operator_methods}
             end
           end
         EOF

@@ -68,7 +68,7 @@ _sections_unfolded = [ "Pause" ]
 script = ExtResource( 3 )
 _sections_unfolded = [ "Pause" ]
 node = null
-vec = Vector2( 2, 3 )
+vector = Vector2( 2, 3 )
 
 [node name="Node" type="Node" parent="Node" index="0"]
 script = ExtResource( 4 )
