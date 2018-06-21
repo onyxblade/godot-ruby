@@ -1,3 +1,4 @@
+#include <pthread.h>
 
 const godot_gdnative_core_api_struct *api = NULL;
 const godot_gdnative_ext_pluginscript_api_struct *pluginscript_api = NULL;
@@ -52,6 +53,7 @@ static const char *RUBY_STRING_DELIMITERS[] = { "\" \"", "' '", 0 };
 static godot_pluginscript_language_desc desc;
 
 static VALUE rb_mGodot;
+static pthread_t ruby_thread_id;
 
 typedef struct {
 	VALUE klass;
@@ -139,6 +141,7 @@ godot_pluginscript_language_data *godot_ruby_init() {
 
 	rb_funcall(rb_mGodot, rb_intern("_initialize"), 0);
 
+	ruby_thread_id = pthread_self();
 	return NULL;
 }
 void godot_ruby_finish(godot_pluginscript_language_data *p_data) {
@@ -148,6 +151,12 @@ void godot_ruby_finish(godot_pluginscript_language_data *p_data) {
 
 godot_pluginscript_script_manifest godot_ruby_script_init(godot_pluginscript_language_data *p_data, const godot_string *p_path, const godot_string *p_source, godot_error *r_error) {
 	godot_pluginscript_script_manifest manifest;
+
+	if (ruby_thread_id != pthread_self()) {
+		printf("script_init called from another thread\n");
+		*r_error = GODOT_ERR_LOCKED;
+		return manifest;
+	}
 
 	VALUE r_path = rb_godot_string_pointer_from_godot(p_path);
 	VALUE r_source = rb_godot_string_pointer_from_godot(p_source);
