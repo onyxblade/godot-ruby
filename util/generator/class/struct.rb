@@ -1,3 +1,4 @@
+require 'yaml'
 module Godot::Generator
   module Class
     class Struct < Base
@@ -6,7 +7,8 @@ module Godot::Generator
       end
 
       def api_functions
-        json = JSON.parse File.open("/home/cichol/godot_headers/gdnative_api.json", &:read)
+        headers_path = YAML.load(File.open("#{__dir__}/../../../env.yml", &:read))["headers_path"]
+        json = JSON.parse File.open("#{headers_path}/gdnative_api.json", &:read)
         api_functions = json['core']['api'].select{|x| x['name'].match(/#{type_name}_/)}
         api_functions.map{|x| Godot::Generator::Function.new(self, x)}.select(&:valid?)
       end
