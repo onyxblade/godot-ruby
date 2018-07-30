@@ -5,7 +5,7 @@ module Godot
     end
 
     def new
-      ClassDB.instance(String.new("Node"))
+      ClassDB.instance(@name)
     end
   end
 end

@@ -24,7 +24,7 @@ module Godot::Generator
                 break;
               #{Godot::Generator::Class.classes.values.map{|c| c.variant_from_godot_branch}.join("\n")}
             }
-            api->godot_variant_destroy(&addr);
+            //api->godot_variant_destroy(&addr);
             return ret;
           }
         EOF

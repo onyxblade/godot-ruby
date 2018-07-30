@@ -204,8 +204,13 @@ godot_pluginscript_script_manifest godot_ruby_script_init(godot_pluginscript_lan
 }
 void godot_ruby_script_finish(godot_pluginscript_script_data *p_data) {
 	godot_ruby_pluginscript_script_data *data = (godot_ruby_pluginscript_script_data*) p_data;
-	rb_funcall(rb_mGodot, rb_intern("_unregister_class"), 1, data->klass);
 	api->godot_free(p_data);
+
+	if (ruby_thread_id != pthread_self()) {
+		printf("script_init called from another thread\n");
+		return;
+	}
+	rb_funcall(rb_mGodot, rb_intern("_unregister_class"), 1, data->klass);
 	printf("script_finish\n");
 }
 
