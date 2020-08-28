@@ -1,3 +1,6 @@
+WARNING: This library has memory issues on mantaining godot objects. And I have forgotten how to fix them. Please avoid using!
+------
+
 # godot-ruby
 
 godot-ruby provides a Ruby language binding for Godot game engine. It is designed to be a drop-in replacement of GDScript.
